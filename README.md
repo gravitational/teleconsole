@@ -74,23 +74,22 @@ open source and hosted [here on Github](https://github.com/gravitational/telepor
 
 What happens when you type `teleconsole`?
 
-1. It generates unique SSH credentials for you.
-2. It launches an SSH server on your host, listening on a random local TCP port.
-3. This server is configured to only trust the generated SSH credentials (secrets).
-4. Then Teleconsole logs into itself, an equivalent of `ssh localhost`.
-5. The secrets are POSTed via HTTPS to a free anonymous SSH proxy on https://teleconsole.com.
-6. The server creates a single-use disposable instance of Teleport SSH proxy, which is 
+1. It generates unique single-use SSH credentials and launches an SSH server on localhost. 
+   Then Teleconsole logs into itself, an equivalent of `ssh localhost`.
+2. SSH credentials are POSTed via HTTPS to a free anonymous SSH proxy on https://teleconsole.com.
+3. The server creates a single-use disposable instance of Teleport SSH proxy, which is 
    trusted by the `teleconsole` SSH server running on your machine. 
-7. Your local `teleconsole` SSH server creates an outbound SSH tunnel to the disposable 
-   Teleport proxy running on https://teleconsole.com.
-8. Now you have two mutually trusting SSH servers: one is running on the Internet and 
-   serving a Web UI, and another is running locally.
+4. Your local `teleconsole` SSH server creates an outbound SSH tunnel to the disposable 
+   Teleport proxy running on https://teleconsole.com. The proxy now acts as a bridge connecting
+   the outside world to your machine.
 
 And here is what happens when you type `teleconsole join <session-id>`:
 
-1. `teleconsole` requests the anonymous proxy for SSH key to `<session-id>` via HTTPS.
-2. It uses those keys to SSH into the remote machine using disposable SSH proxy running
-   on https://teleconsole.com.
+<ol start="5">
+<li>teleconsole requests the anonymous proxy for SSH key to `<session-id>` via HTTPS.</li>
+<li>It uses those keys to SSH into the proxy.</li>
+<li>The proxy forwards the connection through the tunnel created in step 3 to your machine.</li>
+</ol>
 
 ![Teleconsole Diagram](docs/diagram.png)
 
