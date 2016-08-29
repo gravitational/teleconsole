@@ -1,4 +1,5 @@
-VERSION=0.0.3-beta
+VERSION=0.0.5-beta
+
 OUT=out/teleconsole
 GOSRC=$(shell find -name "*.go" -print)
 TELEPORT=$(shell find ../../gravitational/teleport/lib -name "*.go" -print)
