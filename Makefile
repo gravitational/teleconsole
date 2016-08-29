@@ -21,7 +21,7 @@ version:
 	@VERSION=$(VERSION) $(MAKE) -C version
 	git add .
 	git commit -m "Version bump to $(VERSION)"
-	$(MAKE) -C gitref
+	$(MAKE) -C version gitref
 
 .PHONY:clean
 clean:
