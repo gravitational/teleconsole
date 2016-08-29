@@ -108,11 +108,10 @@ Usage: teleconsole <flags> <command>
 Teleconsole allows you to start a new shell session and invite your 
 friends into it.
 
-Launch teleconsole without parameters starts a new session. Simply close
-the session to stop sharing.
+Simply close the session to stop sharing.
 
 Flags:
-   -f host:port  Invitite joining parties to connect to host:port
+   -f host:port  Invite joining parties to connect to host:port
    -L spec       Request port forwarding when joining an existing session
    -insecure     When set, the client will trust invalid SSL certifates
    -v            Verbose logging
