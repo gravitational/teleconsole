@@ -1,2 +1,3 @@
 out
 .vagrant
+version/git.go

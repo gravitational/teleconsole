@@ -15,10 +15,13 @@ dev: $(OUT)
 	sleep 3
 	out/teleconsole -s teleconsole.local:5000 -insecure -vv
 
+# Make version bumps the version
 .PHONY:version
 version:
 	@VERSION=$(VERSION) $(MAKE) -C version
-
+	git add .
+	git commit -m "Version bump to $(VERSION)"
+	$(MAKE) -C gitref
 
 .PHONY:clean
 clean:
