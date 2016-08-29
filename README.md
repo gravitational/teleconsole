@@ -59,10 +59,8 @@ ATTENTION: ekontsevoy has invited you to access port 5000 on their machine via l
 
 So now your friend can click on `http://localhost:9000` to access your application.
 
-**NOTE**: Since `teleconsole` is basically an SSH server, **you have to know what you are doing**.
-
-For example your friend can request port forwarding without your help, just like a 
-regular SSH client would:
+Bear in mind, Teleconsole is jusn an SSH server, this means your friend can request 
+port forwarding without your help, just like a regular SSH client would:
 
 ```
 > teleconsole -F 9000:localhost:5000 join <session-id>
