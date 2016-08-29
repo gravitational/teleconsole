@@ -92,6 +92,8 @@ And here is what happens when you type `teleconsole join <session-id>`:
 2. It uses those keys to SSH into the remote machine using disposable SSH proxy running
    on https://teleconsole.com.
 
+![Teleconsole Diagram](docs/diagram.png)
+
 ## WARNING
 
 Please understand that by running `teleconsole` you are virtually giving the keyboard to
