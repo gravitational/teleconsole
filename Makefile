@@ -1,9 +1,11 @@
+# To bump the version, edit this variable and run `make version`
 VERSION=0.0.5-beta
 
 OUT=out/teleconsole
 GOSRC=$(shell find -name "*.go" -print)
 TELEPORT=$(shell find ../../gravitational/teleport/lib -name "*.go" -print)
 
+# Default target: out/teleconsole
 $(OUT): $(GOSRC) Makefile
 	go build -i -ldflags -w -o $(OUT)
 
@@ -15,7 +17,7 @@ dev: $(OUT)
 	sleep 3
 	out/teleconsole -s teleconsole.local:5000 -insecure -vv
 
-# Make version bumps the version
+# Make version bumps the version (commits it to Git automatically)
 .PHONY:version
 version:
 	@VERSION=$(VERSION) $(MAKE) -C version
