@@ -168,7 +168,7 @@ What do **you** think we should add next? Let us know: `info@gravitational.com`
 ## Who Built Teleconsole?
 
 Teleconsole is simply a cool demo of [Gravitational Teleport](http://gravitational.com/teleport), a product created by 
-[Gravitational Inc](https://gravitational.com). Teleport is an open source comonent of 
+[Gravitational Inc](https://gravitational.com). Teleport is an open source component of 
 our commercial offering for deploying and remotely operating SaaS applications on top of 
 3rd party enterprise infrastructure. The use cases of this technology are:
 
