@@ -1,7 +1,13 @@
 # Teleconsole
 
 Teleconsole is a CLI tool which allows you to instantly turn your laptop
-into an SSH server accessible via a browser or console from anywhere.
+into an SSH server accessible via a browser or console from anywhere. 
+
+### Installing
+
+Download the latest binaries for your platform [here](https://github.com/gravitational/teleconsole/releases) 
+or you can build it from source.
+
 
 ### Quick Start
 
@@ -9,7 +15,7 @@ Simply type `./teleconsole` in your terminal and this is what you will see:
 
 ```
 > teleconsole
-Starting local SSH server on turing...
+Starting local SSH server on localhost...
 Requesting a disposable SSH proxy for ekontsevoy...
 Checking status of the SSH tunnel...
 
@@ -18,14 +24,15 @@ WebUI for this session: https://teleconsole.com/s/29382923a870075324233c490831a7
 To stop broadcasting, exit current shell by typing 'exit' or closing the window.
 ```
 
-`teleconsole` will launch a new shell session and as long as you're in it, your 
+Teleconsole will launch a new shell session and as long as you're in it, your 
 friends can join you either by clicking on a link, or by typing in their terminals:
 
 ```
 > teleconsole join 29382923a870075324233c490831a7
 ```
+... and now you're both typing in the same SSH session!
 
-### Ending Shared Shession
+### Ending the Shession
 
 When you're done with the session, make sure to close it (stop `teleconsole` process)
 either by typing `exit` in the terminal or simply closing it. When Teleconsole exits,
@@ -47,8 +54,7 @@ Say, you are developing a web application and it is currently running on your
 When your friends join this session, they will see something like this:
 
 ```
-ATTENTION: ekontsevoy has invited you to access port 5000 
-           on their machine via localhost:9000
+ATTENTION: ekontsevoy has invited you to access port 5000 on their machine via localhost:9000
 ```
 
 So now your friend can click on `http://localhost:9000` to access your application.
@@ -67,7 +73,7 @@ Teleconsole is built on top of [Gravitational Teleport](http://gravitational.com
 which is a clustered SSH server with built-in SSH bastion/proxy. Both projects are 
 open source and hosted [here on Github](https://github.com/gravitational/teleport/blob/master/README.md).
 
-Here is what happens when you type `teleconsole`:
+What happens when you type `teleconsole`?
 
 1. It generates unique SSH credentials for you.
 2. It launches an SSH server on your host, listening on a random local TCP port.
@@ -81,7 +87,7 @@ Here is what happens when you type `teleconsole`:
 8. Now you have two mutually trusting SSH servers: one is running on the Internet and 
    serving a Web UI, and another is running locally.
 
-Here is what happens when you type `teleconsole join <session-id>`:
+And here is what happens when you type `teleconsole join <session-id>`:
 
 1. `teleconsole` requests the anonymous proxy for SSH key to `<session-id>` via HTTPS.
 2. It uses those keys to SSH into the remote machine using disposable SSH proxy running
@@ -141,13 +147,16 @@ Made by Gravitational Inc http://gravitational.com
 ## Support for Private SSH Bastions
 
 Some people may be uncomfortable using publicly accessible SSH bastion on https://teleconsole.com
-They can do the same thing using our [Teleport](http://gravitational.com/teleport). In fact, Teleport
-supports many more features, including session recording and replay, `scp` and is compatible
-with OpenSSH client.
+They can do the same thing by setting up a [Teleport](http://gravitational.com/teleport) bastion
+on their own server. 
+
+In fact, Teleport supports many more features, including session recording and replay, 
+`scp` and is compatible with OpenSSH client.
 
 ## Roadmap
 
-We have been using this with friends and so far the top feature requests are:
+Before open sourcing it, we have been using Teleconsole with close friends quite a bit. 
+So far the top feature requests are:
 
 1. Read-only sessions: this would allow you to broadcast only the picture of your
    terminal. Port forwarding in this mode would be disabled.
@@ -155,3 +164,17 @@ We have been using this with friends and so far the top feature requests are:
 3. Additional password auth per session.
 
 What do **you** think we should add next? Let us know: `info@gravitational.com`
+
+## Who Built Teleconsole?
+
+Teleconsole is simply a cool demo of [Gravitational Teleport](http://gravitational.com/teleport), a product created by 
+[Gravitational Inc](https://gravitational.com). Teleport is an open source comonent of 
+our commercial offering for deploying and remotely operating SaaS applications on top of 
+3rd party enterprise infrastructure. The use cases of this technology are:
+
+* Selling and remotely managing SaaS on private clouds in enterprise customers' 
+  data centers.
+* Deploying and remotely managing SaaS apps on someone else's AWS accounts.
+* Creating remotely managed Kubernetes clusters in 3rd party AWS accounts.
+
+For more info, drop us an email: [info@gravitational.com](mailto:info@gravitational.com)
