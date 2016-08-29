@@ -23,6 +23,8 @@ version:
 	@VERSION=$(VERSION) $(MAKE) -C version
 	git add .
 	git commit -m "Version bump to $(VERSION)"
+	git tag $(VERSION)
+	git push --tags
 	$(MAKE) -C version gitref
 
 .PHONY:clean
