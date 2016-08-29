@@ -32,7 +32,7 @@ friends can join you either by clicking on a link, or by typing in their termina
 ```
 ... and now you're both typing in the same SSH session!
 
-### Ending the Shession
+### Ending the Session
 
 When you're done with the session, make sure to close it (stop `teleconsole` process)
 either by typing `exit` in the terminal or simply closing it. When Teleconsole exits,
@@ -59,7 +59,8 @@ ATTENTION: ekontsevoy has invited you to access port 5000 on their machine via l
 
 So now your friend can click on `http://localhost:9000` to access your application.
 
-**NOTE** Since `teleconsole` is basically an SSH server, **you have to know what you are doing**
+**NOTE**: Since `teleconsole` is basically an SSH server, **you have to know what you are doing**.
+
 For example your friend can request port forwarding without your help, just like a 
 regular SSH client would:
 
@@ -79,11 +80,11 @@ What happens when you type `teleconsole`?
 2. It launches an SSH server on your host, listening on a random local TCP port.
 3. This server is configured to only trust the generated SSH credentials (secrets).
 4. Then Teleconsole logs into itself, an equivalent of `ssh localhost`.
-5. The secrets are POSTed via HTTPS to a free anonymous SSH proxy on https://teleconsole.com
+5. The secrets are POSTed via HTTPS to a free anonymous SSH proxy on https://teleconsole.com.
 6. The server creates a single-use disposable instance of Teleport SSH proxy, which is 
    trusted by the `teleconsole` SSH server running on your machine. 
 7. Your local `teleconsole` SSH server creates an outbound SSH tunnel to the disposable 
-   Teleport proxy running on https://teleconsole.com
+   Teleport proxy running on https://teleconsole.com.
 8. Now you have two mutually trusting SSH servers: one is running on the Internet and 
    serving a Web UI, and another is running locally.
 
@@ -91,7 +92,7 @@ And here is what happens when you type `teleconsole join <session-id>`:
 
 1. `teleconsole` requests the anonymous proxy for SSH key to `<session-id>` via HTTPS.
 2. It uses those keys to SSH into the remote machine using disposable SSH proxy running
-   on https://teleconsole.com
+   on https://teleconsole.com.
 
 ## WARNING
 
