@@ -1,3 +1,10 @@
+
+## WARNING
+
+Please understand that by running `teleconsole` you are virtually giving the keyboard to
+anyone with a link. We made the session IDs sufficiently hard to guess, but **you are still
+running an SSH server accessible via public Internet** during the Teleconsole session.
+
 # Teleconsole
 
 Teleconsole is a CLI tool which allows you to instantly turn your laptop
@@ -93,11 +100,6 @@ And here is what happens when you type `teleconsole join <session-id>`:
 
 ![Teleconsole Diagram](docs/diagram.png)
 
-## WARNING
-
-Please understand that by running `teleconsole` you are virtually giving the keyboard to
-anyone with a link. We made the session IDs sufficiently hard to guess, but **you are still
-running an SSH server accessible via public Internet** during the Teleconsole session.
 
 ### CLI Reference
 
