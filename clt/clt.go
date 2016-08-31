@@ -123,7 +123,7 @@ func StartBroadcast(c *conf.Config, api APIClient, cmd []string) error {
 
 		// now lets see how many clients the server sees (should be at 1 - ourselves)
 		fmt.Println("Checking status of the SSH tunnel...")
-		var brokenSessionError = fmt.Errorf("SSH tunnel cannot be established")
+		var brokenSessionError = fmt.Errorf("SSH tunnel cannot be established, please try again.")
 		for i := 0; i < 5; i++ {
 			time.Sleep(SyncRefreshInterval * 2)
 			sessionStats, err := api.GetSessionStats(api.SessionID)
@@ -133,7 +133,7 @@ func StartBroadcast(c *conf.Config, api APIClient, cmd []string) error {
 			}
 			// found ourserlves!
 			if len(sessionStats.Parties) > 0 {
-				fmt.Printf("\n\rYour Teleconsole ID: %s\n\rWebUI for this session: %v/s/%s\n\rTo stop broadcasting, exit current shell by typing 'exit' or closing the window.\n\r",
+				fmt.Printf("\n\rYour Teleconsole ID: \033[1m%s\033[0m\n\rWebUI for this session: %v/s/%s\n\rTo stop broadcasting, exit current shell by typing 'exit' or closing the window.\n\r",
 					api.SessionID, api.friendlyProxyURL(), api.SessionID)
 				localClient.ExitMsg = "You have ended your session broadcast and the SSH tunnel is closed."
 				return false, nil

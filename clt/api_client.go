@@ -2,8 +2,6 @@ package clt
 
 import (
 	"bytes"
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,6 +13,7 @@ import (
 	"github.com/gravitational/teleport/integration"
 	"github.com/gravitational/teleport/lib/client"
 	"github.com/gravitational/teleport/lib/session"
+	"github.com/gravitational/teleport/lib/utils"
 
 	"github.com/gravitational/teleconsole/lib"
 
@@ -66,13 +65,12 @@ func (this *APIClient) RequestNewSession(
 	log.Infof("Requesting a new session for %v forwarding %v", login, fport)
 
 	// generate a random session ID:
-	randomBytes := make([]byte, 16)
-	_, err := rand.Read(randomBytes)
+	var err error
+	this.SessionID, err = utils.CryptoRandomHex(20)
 	if err != nil {
 		log.Error(err)
 		return nil, trace.Wrap(err)
 	}
-	this.SessionID = hex.EncodeToString(randomBytes)
 
 	// create a session here on the client, pack our trusted secrets to it and send it
 	// to the server via HTTPS:

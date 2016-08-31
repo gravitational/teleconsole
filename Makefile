@@ -5,7 +5,7 @@
 #   - run `make publish` to create tarball and push it to S3
 
 # To bump the version, edit this variable and run `make version`
-VERSION=0.0.6-beta
+VERSION=0.0.7-beta
 
 OUT=out/teleconsole
 GOSRC=$(shell find -name "*.go" -print)
