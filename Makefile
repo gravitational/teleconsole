@@ -10,7 +10,7 @@ VERSION=0.0.7-beta
 OUT=out/teleconsole
 GOSRC=$(shell find -name "*.go" -print)
 TELEPORT=$(shell find ../../gravitational/teleport/lib -name "*.go" -print)
-TARBALL=out/teleconsole-v$(VERSION)-$(shell go env GOOS)-$(shell uname -p).tar.bz2
+TARBALL="teleconsole-v$(VERSION)-`go env GOOS`-`go env GOARCH`.tar.bz2"
 
 # Default target: out/teleconsole
 $(OUT): $(GOSRC) Makefile
@@ -43,9 +43,8 @@ version:
 # publish: creates a tarball of the current release and pushes it to S3
 .PHONY:publish
 publish: $(OUT)
-	$(MAKE) -C ../teleconsole 
-	tar -C ../teleconsole/out -cj teleconsole > $(TARBALL)
-	aws s3 cp $(TARBALL) s3://s3.gravitational.io/teleconsole/
+	cd out && tar -cjf $(TARBALL) teleconsole 
+	aws s3 cp out/$(TARBALL) s3://s3.gravitational.io/teleconsole/
 
 .PHONY:clean
 clean:
