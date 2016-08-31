@@ -2,8 +2,8 @@
 package version
 
 const (
-	Version   = "0.0.6-beta"
-	BuildDate = "2016-08-29"
+	Version   = "0.0.7-beta"
+	BuildDate = "2016-08-31"
 )
 
 var Gitref string

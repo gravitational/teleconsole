@@ -10,7 +10,7 @@ VERSION=0.0.7-beta
 OUT=out/teleconsole
 GOSRC=$(shell find -name "*.go" -print)
 TELEPORT=$(shell find ../../gravitational/teleport/lib -name "*.go" -print)
-TARBALL=out/teleconsole-v$(VERSION)-$(shell go env GOOS)-$(shell go env GOARCH).tar.bz2
+TARBALL=out/teleconsole-v$(VERSION)-$(shell go env GOOS)-$(shell uname -p).tar.bz2
 
 # Default target: out/teleconsole
 $(OUT): $(GOSRC) Makefile
