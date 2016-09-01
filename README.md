@@ -1,14 +1,7 @@
-
-## WARNING
-
-Please understand that by running `teleconsole` you are virtually giving the keyboard to
-anyone with a link. We made the session IDs sufficiently hard to guess, but **you are still
-running an SSH server accessible via public Internet** during the Teleconsole session.
-
 # Teleconsole
 
-Teleconsole is a CLI tool which allows you to instantly turn your laptop
-into an SSH server accessible via a browser or console from anywhere. 
+Teleconsole is a free service to share your terminal session with people you trust. 
+Your friends can join via a command line using SSH or by using their browser.
 
 ### Installing
 
@@ -31,13 +24,29 @@ WebUI for this session: https://teleconsole.com/s/29382923a870075324233c490831a7
 To stop broadcasting, exit current shell by typing 'exit' or closing the window.
 ```
 
-Teleconsole will launch a new shell session and as long as you're in it, your 
-friends can join you either by clicking on a link, or by typing in their terminals:
+Teleconsole will launch a new shell session and print the unique session ID of 
+`29382923a870075324233c490831a7` which you need to share with your friend. 
+Your friend can join in either by clicking on a link, or by typing: 
 
 ```
 > teleconsole join 29382923a870075324233c490831a7
 ```
-... and now you're both typing in the same SSH session!
+
+Now you are both using the same terminal session running on your machine, even if 
+both of you are on separate networks separated by NAT.
+
+You can watch a [30 second video](https://www.youtube.com/watch?v=fA5Wt79GizA&vq=hd1080&rel=0) 
+of how this works. Here's the simplified animation:
+
+![Teleconsole animation](docs/teleconsole-animated.gif)
+
+
+### WARNING
+
+Please understand that by running `teleconsole` you are virtually giving the keyboard to
+anyone with a link. We made the session IDs sufficiently hard to guess, but **you are still
+running an SSH server accessible via public Internet** during the Teleconsole session.
+
 
 ### Ending the Session
 
@@ -47,10 +56,7 @@ the outbound SSH tunnel is closed and your machine is no longer accessible.
 
 ### Port Forwarding
 
-Teleconsole is a tiny program and it does not have any hard to discover features,
-but one is worth mentioning: port forwarding.
-
-Say, you are developing a web application and it is currently running on your 
+Let's say you are developing a web application and it is currently running on your 
 `localhost:5000`. You can make it accessible by your friends if you forward port 
 `5000` to them:
 
@@ -168,14 +174,9 @@ What do **you** think we should add next? Let us know: `info@gravitational.com`
 
 ## Who Built Teleconsole?
 
-Teleconsole is simply a cool demo of [Gravitational Teleport](http://gravitational.com/teleport), a product created by 
-[Gravitational Inc](https://gravitational.com). Teleport is an open source component of 
-our commercial offering for deploying and remotely operating SaaS applications on top of 
-3rd party enterprise infrastructure. The use cases of this technology are:
-
-* Selling and remotely managing SaaS on private clouds in enterprise customers' 
-  data centers.
-* Deploying and remotely managing SaaS apps on someone else's AWS accounts.
-* Creating remotely managed Kubernetes clusters in 3rd party AWS accounts.
+Teleconsole is an easy to use demo of [Gravitational Teleport](http://gravitational.com/teleport),
+a product created by [Gravitational Inc](https://gravitational.com). Teleport is an open source 
+component of our commercial offering for deploying and remotely [operating SaaS applications on top of 
+3rd party enterprise infrastructure](https://gravitational.com/product). 
 
 For more info, drop us an email: [info@gravitational.com](mailto:info@gravitational.com)
