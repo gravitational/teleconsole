@@ -90,10 +90,10 @@ What happens when you type `teleconsole`?
    Teleport proxy running on https://teleconsole.com. The proxy now acts as a bridge connecting
    the outside world to your machine.
 
-And here is what happens when you type `teleconsole join <session-id>`:
+And here is what happens when you type `teleconsole join session-id`:
 
 <ol start="5">
-<li>teleconsole requests the anonymous proxy for SSH key to `<session-id>` via HTTPS.</li>
+<li>teleconsole requests the anonymous proxy for SSH key to <code>session-id</code> via HTTPS.</li>
 <li>It uses those keys to SSH into the proxy.</li>
 <li>The proxy forwards the connection through the tunnel created in step 3 to your machine.</li>
 </ol>
