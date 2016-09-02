@@ -20,7 +20,9 @@ $(OUT): $(GOSRC) Makefile
 # Runs teleconsole against a server hosted in a local VM running
 # as 'teleconsole.local' 
 .PHONY:dev
-dev: $(OUT)
+dev: clean
+	$(MAKE) $(OUT)
+	$(MAKE) -C ../telecast clean
 	$(MAKE) -C ../telecast dev
 	sleep 3
 	out/teleconsole -s teleconsole.local:5000 -insecure -vv

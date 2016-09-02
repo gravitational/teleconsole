@@ -124,8 +124,8 @@ func StartBroadcast(c *conf.Config, api APIClient, cmd []string) error {
 		// now lets see how many clients the server sees (should be at 1 - ourselves)
 		fmt.Println("Checking status of the SSH tunnel...")
 		var brokenSessionError = fmt.Errorf("SSH tunnel cannot be established, please try again.")
-		for i := 0; i < 5; i++ {
-			time.Sleep(SyncRefreshInterval * 2)
+		for i := 0; i < 10; i++ {
+			time.Sleep(SyncRefreshInterval / 2)
 			sessionStats, err := api.GetSessionStats(api.SessionID)
 			if err != nil {
 				log.Debug(err)
@@ -143,13 +143,9 @@ func StartBroadcast(c *conf.Config, api APIClient, cmd []string) error {
 	}
 
 	// SSH into ourselves (we'll try a few times)
-	for i := 0; i < 3; i++ {
-		err = localClient.SSH(cmd, false, nil)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-		} else {
-			break
-		}
+	err = localClient.SSH(cmd, false, nil)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 	}
 	return nil
 }

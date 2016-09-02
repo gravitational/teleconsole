@@ -37,16 +37,27 @@ func (this *App) DebugDump() {
 }
 
 func initLogging(verbosity int) {
+	// our log:
 	log.SetLevel(log.ErrorLevel)
 	log.SetOutput(os.Stderr)
+
+	// teleport log:
 	utils.InitLoggerCLI()
 
-	if verbosity > 0 {
+	switch verbosity {
+	case 1:
+		// our log:
+		log.SetLevel(log.InfoLevel)
+	case 2:
+		// our log:
 		log.SetLevel(log.DebugLevel)
-		// in debug mode, enable verbose logging for Teleport too:
-		if verbosity > 1 {
-			utils.InitLoggerDebug()
-		}
+		// teleport log:
+		utils.InitLoggerVerbose()
+	case 3:
+		// our log:
+		log.SetLevel(log.DebugLevel)
+		// teleport log:
+		utils.InitLoggerDebug()
 	}
 }
 
@@ -59,8 +70,9 @@ func NewApp(fs *flag.FlagSet) (*App, error) {
 		fs = flag.NewFlagSet("teleconsole", flag.ExitOnError)
 	}
 	// parse CLI flags
-	verboseMode := fs.Bool("v", false, "")
-	debugMode := fs.Bool("vv", false, "")
+	verbose := fs.Bool("v", false, "")
+	verbose2 := fs.Bool("vv", false, "")
+	verbose3 := fs.Bool("vvv", false, "")
 	runCommand := fs.String("c", "", "")
 	serverFlag := fs.String("s", "", "")
 	insecure := fs.Bool("insecure", false, "")
@@ -73,11 +85,12 @@ func NewApp(fs *flag.FlagSet) (*App, error) {
 
 	// init logging:
 	verbosity := 0
-	if *verboseMode {
-		verbosity = 1
-	}
-	if *debugMode {
+	if *verbose3 {
+		verbosity = 3
+	} else if *verbose2 {
 		verbosity = 2
+	} else if *verbose {
+		verbosity = 1
 	}
 	initLogging(verbosity)
 
