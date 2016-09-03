@@ -9,9 +9,9 @@ import (
 	"github.com/gravitational/teleconsole/lib"
 	"github.com/gravitational/teleconsole/version"
 
-	"github.com/gravitational/teleport/integration"
 	"github.com/gravitational/teleport/lib/auth/native"
 	"github.com/gravitational/teleport/lib/client"
+	teleport "github.com/gravitational/teleport/lib/defaults"
 	"github.com/gravitational/teleport/lib/utils"
 
 	"github.com/gravitational/trace"
@@ -96,7 +96,10 @@ func NewApp(fs *flag.FlagSet) (*App, error) {
 
 	// configure teleport internals to use our ping interval.
 	// IMPORANT: these must be similar for proxies and servers
-	integration.SetTestTimeouts(SyncRefreshInterval)
+	teleport.SessionRefreshPeriod = SyncRefreshInterval
+	teleport.ReverseTunnelAgentHeartbeatPeriod = SyncRefreshInterval * 2
+	teleport.ServerHeartbeatTTL = SyncRefreshInterval * 2
+
 	native.PrecalculatedKeysNum = 0
 
 	// read configuration from rcfile in ~/

@@ -27,7 +27,7 @@ var (
 	// SyncRefreshIntervalMs defines the minimum amount of time it takes for
 	// the local SSH server and the disposable proxy to synchronize the session
 	// state (milliseconds)
-	SyncRefreshInterval = time.Second * 2
+	SyncRefreshInterval = time.Second
 )
 
 // StartBroadcast starts a new SSH session exposed to the world via disposable
@@ -124,8 +124,9 @@ func StartBroadcast(c *conf.Config, api APIClient, cmd []string) error {
 		// now lets see how many clients the server sees (should be at 1 - ourselves)
 		fmt.Println("Checking status of the SSH tunnel...")
 		var brokenSessionError = fmt.Errorf("SSH tunnel cannot be established, please try again.")
-		for i := 0; i < 10; i++ {
-			time.Sleep(SyncRefreshInterval / 2)
+		const attempts = 10
+		for i := 0; i < attempts; i++ {
+			time.Sleep(SyncRefreshInterval)
 			sessionStats, err := api.GetSessionStats(api.SessionID)
 			if err != nil {
 				log.Debug(err)

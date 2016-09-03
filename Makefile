@@ -25,7 +25,7 @@ dev: clean
 	$(MAKE) -C ../telecast clean
 	$(MAKE) -C ../telecast dev
 	sleep 3
-	out/teleconsole -s teleconsole.local:5000 -insecure -vv
+	out/teleconsole -s teleconsole.local:5000 -insecure
 
 
 # Makes a new release (pushes tags to Github)
