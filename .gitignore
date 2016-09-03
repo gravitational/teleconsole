@@ -1,3 +1,4 @@
 out
 .vagrant
 version/git.go
+loop.sh
