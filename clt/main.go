@@ -27,7 +27,7 @@ type App struct {
 	conf *conf.Config
 
 	// Fully configured API client for Teleconsole server
-	client APIClient
+	client *APIClient
 }
 
 func (this *App) DebugDump() {
@@ -135,7 +135,7 @@ func NewApp(fs *flag.FlagSet) (*App, error) {
 	return &App{
 		Args:   cliArgs,
 		conf:   config,
-		client: NewAPIClient(config.APIEndpointURL, version.Version),
+		client: NewAPIClient(config, version.Version),
 	}, nil
 }
 

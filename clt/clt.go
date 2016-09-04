@@ -43,29 +43,28 @@ var (
 //    with other Teleconsole users so they could join this SSH session via proxy
 // 4. Launches shell. When the shell exits, the SSH session is also terminated
 //    disconnecting all parties.
-func StartBroadcast(c *conf.Config, api APIClient, cmd []string) error {
+func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 	if c.ForwardPorts != nil {
 		return trace.Errorf("-L must be used with join")
 	}
-
+	// check API connectivity and compatibility
+	if err := api.CheckVersion(); err != nil {
+		return trace.Wrap(err)
+	}
 	u, err := user.Current()
 	if err != nil {
 		return trace.Wrap(err)
 	}
-
 	ports, err := lib.GetFreePorts(5)
 	if err != nil {
 		log.Error(err)
 		return trace.Wrap(err)
 	}
-
-	// get the local host name:
 	hostName, err := os.Hostname()
 	if err != nil {
 		log.Error(err)
 		return trace.Wrap(err)
 	}
-
 	// create a new (local) teleport server instance and add ourselves as a user to it:
 	fmt.Printf("Starting local SSH server on %s...\n", hostName)
 	local := integration.NewInstance(DefaultSiteName, hostName, ports, nil, nil)
@@ -79,14 +78,9 @@ func StartBroadcast(c *conf.Config, api APIClient, cmd []string) error {
 		log.Error(err)
 		return trace.Wrap(err)
 	}
-
 	// Assign the proper server to the generated secrets (they'll be used to configure
 	// the reverse SSH tunnel to it)
-	serverURL, err := api.ServerURL()
-	if err != nil {
-		log.Error(err)
-		return trace.Wrap(err)
-	}
+	serverURL := api.Endpoint
 	proxySession.Secrets.ListenAddr = lib.ReplaceHost(proxySession.Secrets.ListenAddr, serverURL.Host)
 
 	// start the local teleport server instance initialized to trust the newly created
@@ -165,7 +159,7 @@ func onStopBroadcast(local *integration.TeleInstance) {
 // publishSession must run as a goroutine: it waits for the local session
 // inside 'local' Teleport instance to become available, and as soon as it
 // does, it publishes it to the Telecast servers' disposable proxy
-func publishSession(local *integration.TeleInstance, api APIClient) error {
+func publishSession(local *integration.TeleInstance, api *APIClient) error {
 	// make sure the tunnel ("site API") is initialized:
 	if local.Tunnel == nil {
 		return trace.Wrap(tunnelError)
@@ -225,7 +219,7 @@ func printPortInvite(login string, p *client.ForwardedPort) {
 }
 
 // Joins someone's session given its ID
-func Join(c *conf.Config, api APIClient, sid string) error {
+func Join(c *conf.Config, api *APIClient, sid string) error {
 	if c.ForwardPort != nil {
 		return trace.Errorf("-f cannot be used with join")
 	}
@@ -242,11 +236,7 @@ func Join(c *conf.Config, api APIClient, sid string) error {
 	// session's proxy host is never configured properly (because the server
 	// who returned it does not know which DNS name it's accessible by).
 	// replace host, keep ports:
-	serverURL, err := api.ServerURL()
-	if err != nil {
-		return trace.Wrap(err)
-	}
-	session.ProxyHostPort = lib.ReplaceHost(session.ProxyHostPort, serverURL.Host)
+	session.ProxyHostPort = lib.ReplaceHost(session.ProxyHostPort, api.Endpoint.Host)
 
 	if session.ForwardedPort != nil {
 		session.ForwardedPort.SrcIP = "127.0.0.1"
@@ -270,7 +260,7 @@ func Join(c *conf.Config, api APIClient, sid string) error {
 		Host:               nodeHost,
 		HostPort:           nodePort,
 		HostLogin:          session.Login,
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: false,
 		KeysDir:            "/tmp/",
 		SiteName:           DefaultSiteName,
 		LocalForwardPorts:  c.ForwardPorts,

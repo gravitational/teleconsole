@@ -2,11 +2,13 @@ package clt
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"strings"
 
@@ -15,42 +17,76 @@ import (
 	"github.com/gravitational/teleport/lib/session"
 	"github.com/gravitational/teleport/lib/utils"
 
+	"github.com/gravitational/teleconsole/conf"
 	"github.com/gravitational/teleconsole/lib"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gravitational/trace"
 )
 
+// APIClient is an HTTP client for talking to telecast server asking for
+// new Teleport proxy instances
 type APIClient struct {
 	SessionID     string
-	Endpoint      string
+	Endpoint      *url.URL
 	clientVersion string
+	httpClient    http.Client
 }
 
-func NewAPIClient(endpoint *url.URL, clientVersion string) APIClient {
-	return APIClient{
-		Endpoint:      endpoint.String(),
+// NewAPIClient creates and returns the new API client
+func NewAPIClient(config *conf.Config, clientVersion string) *APIClient {
+	client := &APIClient{
+		Endpoint:      config.APIEndpointURL,
 		clientVersion: clientVersion,
 	}
-}
+	client.httpClient.Jar, _ = cookiejar.New(nil)
 
-func (this *APIClient) ServerURL() (*url.URL, error) {
-	return url.Parse(this.Endpoint)
-}
-
-func (this *APIClient) friendlyProxyURL() string {
-	u, err := this.ServerURL()
-	if err != nil {
-		return fmt.Sprintf("[%v]", err)
-	}
-	// remove :443 port if the theme is https
-	host, port, err := net.SplitHostPort(u.Host)
-	if err == nil {
-		if port == "443" && u.Scheme == "https" {
-			u.Host = host
+	if config.InsecureHTTPS {
+		fmt.Println("\033[1mWARNING:\033[0m running in insecure mode!")
+		client.httpClient.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
 	}
-	return u.String()
+	return client
+}
+
+// Sends the version of the client to the server and receives a session
+// cookie. Every new API conversation must start here
+func (this *APIClient) CheckVersion() error {
+	resp, err := this.GET("/api/version")
+	if err != nil {
+		log.Error(err)
+		return trace.Wrap(err)
+	}
+	// HTTP error?
+	if resp.StatusCode != http.StatusOK {
+		return trace.Wrap(makeHTTPError(resp))
+	}
+	// parse response (updated session object) and return it:
+	var sv lib.ServerVersion
+	decoder := json.NewDecoder(resp.Body)
+	if err = decoder.Decode(&sv); err != nil {
+		log.Error(err)
+		return trace.Errorf("Server returned malformed response")
+	}
+	// display server-supplied warning message:
+	if sv.WarningMsg != "" {
+		fmt.Println("\033[1mWARNING:\033[0m", sv.WarningMsg)
+	}
+	// change the endpoint if requested:
+	if sv.Endpoint != "" {
+		u := &url.URL{
+			Scheme: "https",
+			Host:   this.Endpoint.Host,
+			Path:   "/api",
+		}
+		cookies := this.httpClient.Jar.Cookies(u)
+		u.Host = sv.Endpoint
+		this.Endpoint.Host = sv.Endpoint
+		this.httpClient.Jar.SetCookies(u, cookies)
+	}
+	log.Infof("Connecting to https://%s", this.Endpoint.Host)
+	return nil
 }
 
 // RequestNewSession makes an HTTP call to a Telecast server, passing the SSH secrets
@@ -88,7 +124,7 @@ func (this *APIClient) RequestNewSession(
 		log.Error(err)
 		return nil, trace.Wrap(err)
 	}
-	resp, err := this.POST(this.Endpoint+"/api/sessions", "application/json", bytes.NewBuffer(sessionBytes))
+	resp, err := this.POST("/api/sessions", "application/json", bytes.NewBuffer(sessionBytes))
 	if err != nil {
 		log.Error(err)
 		return nil, trace.Wrap(err)
@@ -107,8 +143,8 @@ func (this *APIClient) RequestNewSession(
 }
 
 func (this *APIClient) PublishSessionID(sid session.ID) error {
-	url := fmt.Sprintf("%s/api/session/%s", this.Endpoint, this.SessionID)
-	resp, err := this.POST(url, "text/plain", strings.NewReader(sid.String()))
+	resp, err := this.POST("/api/session/"+this.SessionID,
+		"text/plain", strings.NewReader(sid.String()))
 	// HTTP error:
 	if resp.StatusCode != http.StatusOK {
 		return trace.Wrap(makeHTTPError(resp))
@@ -117,8 +153,7 @@ func (this *APIClient) PublishSessionID(sid session.ID) error {
 }
 
 func (this *APIClient) GetSessionDetails(wsid string) (*lib.Session, error) {
-	url := fmt.Sprintf("%s/api/sessions/%s", this.Endpoint, wsid)
-	resp, err := this.GET(url)
+	resp, err := this.GET("/api/sessions/" + wsid)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -137,7 +172,7 @@ func (this *APIClient) GetSessionDetails(wsid string) (*lib.Session, error) {
 }
 
 func (this *APIClient) GetSessionStats(wsid string) (*lib.SessionStats, error) {
-	url := fmt.Sprintf("%s/api/sessions/%s/stats", this.Endpoint, wsid)
+	url := fmt.Sprintf("/api/sessions/%s/stats", wsid)
 	resp, err := this.GET(url)
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -157,22 +192,35 @@ func (this *APIClient) GetSessionStats(wsid string) (*lib.SessionStats, error) {
 }
 
 func (this *APIClient) GET(url string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", this.Endpoint.String()+url, nil)
 	if err != nil {
 		return nil, err
 	}
 	// set the version of the client:
 	req.Header.Set(lib.ClientVersionHeader, this.clientVersion)
-	return http.DefaultClient.Do(req)
+	return this.httpClient.Do(req)
 }
 
 func (this *APIClient) POST(url string, contentType string, reader io.Reader) (*http.Response, error) {
-	req, err := http.NewRequest("POST", url, reader)
+	req, err := http.NewRequest("POST", this.Endpoint.String()+url, reader)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", contentType)
 	// set the version of the client:
 	req.Header.Set(lib.ClientVersionHeader, this.clientVersion)
-	return http.DefaultClient.Do(req)
+	return this.httpClient.Do(req)
+}
+
+// friendlyProxyURL returns the URL of the Teleport proxy, it's the one
+// we print to stdout upon creation of a new session
+func (this *APIClient) friendlyProxyURL() string {
+	// remove :443 port if the theme is https
+	host, port, err := net.SplitHostPort(this.Endpoint.Host)
+	if err == nil {
+		if port == "443" && this.Endpoint.Scheme == "https" {
+			this.Endpoint.Host = host
+		}
+	}
+	return this.Endpoint.String()
 }

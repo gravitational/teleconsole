@@ -2,10 +2,9 @@ package main
 
 import (
 	//"crypto/x509"
-	"crypto/tls"
+
 	"crypto/x509"
 	"fmt"
-	"net/http"
 	"net/url"
 	"os"
 
@@ -26,13 +25,6 @@ func main() {
 	} else {
 		logrus.SetFormatter(&trace.TextFormatter{})
 		app.DebugDump()
-	}
-
-	if conf.InsecureHTTPS {
-		fmt.Println("\033[1mWARNING:\033[0m running in insecure mode!")
-		http.DefaultClient.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
 	}
 
 	// we have CLI args?

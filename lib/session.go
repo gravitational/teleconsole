@@ -16,6 +16,7 @@ type Party struct {
 	LastActive time.Time `json:"last_active"`
 }
 
+// Session travels in JSON format between teleconsole client/server
 type Session struct {
 	// web session ID (not the same as teleport session ID)
 	ID string `json:"id"`
@@ -47,6 +48,20 @@ type SessionStats struct {
 	// Terminal size
 	TermWidth  int `json:"term_width"`
 	TermHeight int `json:"term_height"`
+}
+
+// ServerVersion is a JSON response returned by the server at
+// the behinning of API conversation
+type ServerVersion struct {
+	// server's version & build data
+	ServerVersion string `json:"server_ver"`
+
+	// clients must show this warning message to users if it's not empty
+	WarningMsg string `json:"warn_msg"`
+
+	// server may "redirect" the client to use this endpoint
+	// instead:
+	Endpoint string `json:"endpoint"`
 }
 
 func (s *Session) GetNodeHostPort() (host string, port int, err error) {

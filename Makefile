@@ -5,7 +5,7 @@
 #   - run `make publish` to create tarball and push it to S3
 
 # To bump the version, edit this variable and run `make version`
-VERSION=0.0.7-beta
+export VERSION=0.0.9-beta
 
 OUT=out/teleconsole
 GOSRC=$(shell find -name "*.go" -print)
@@ -14,7 +14,7 @@ TARBALL="teleconsole-v$(VERSION)-`go env GOOS`-`go env GOARCH`.tar.bz2"
 
 # Default target: out/teleconsole
 $(OUT): $(GOSRC) Makefile
-	$(MAKE) -C version gitref
+	$(MAKE) -C version
 	go build -i -ldflags -w -o $(OUT)
 
 # Runs teleconsole against a server hosted in a local VM running
