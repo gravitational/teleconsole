@@ -16,5 +16,5 @@ func init() { Gitref = \"$(GITREF)\"\nBuildDate= \"$(BUILDDATE)\"\n}  "
 #
 .PHONY:setver
 setver:
-	printf $(VERSION_GO)  > version.go
-	printf $(GITREF_GO)  > git.go
+	@printf $(VERSION_GO)  > version.go
+	@printf $(GITREF_GO)  > git.go

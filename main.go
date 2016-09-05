@@ -36,7 +36,7 @@ func main() {
 			err = app.Join()
 		case "version":
 			version.Print("Teleconsole", conf.Verbosity > 0)
-			os.Exit(1)
+			os.Exit(0)
 		default:
 			app.Usage()
 		}
