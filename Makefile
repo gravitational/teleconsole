@@ -1,11 +1,12 @@
 # To create a new release of Teleconsole:
 #   - make your changes
 #   - bump VERSION variable in this Makefile
+#   - run 'make version'
 #   - commit & push to git
 #   - run `make release` to create git tags
 
 # To bump the version, edit this variable and run `make version`
-export VERSION=0.1.0-beta
+export VERSION=0.1.1-beta
 
 OUT=out/teleconsole
 GOSRC=$(shell find -name "*.go" -print)
@@ -26,7 +27,6 @@ dev: clean
 	$(MAKE) -C ../telecast dev
 	sleep 3
 	out/teleconsole -s teleconsole.local:5000 -insecure
-
 
 # Makes a new release (pushes tags to Github)
 .PHONY:release 
