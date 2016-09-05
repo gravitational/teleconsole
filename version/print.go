@@ -8,6 +8,10 @@ import (
 func Print(prefix string, verbose bool) {
 	fmt.Printf("%s %v\n", prefix, Version)
 	if verbose {
-		fmt.Printf("Built on %v. Git: %v\n", BuildDate, Gitref)
+		if BuildDate != "" {
+			fmt.Printf("Built on %v. Git: %v\n", BuildDate, Gitref)
+		} else {
+			fmt.Printf("Installed via go\n")
+		}
 	}
 }
