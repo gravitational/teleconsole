@@ -39,7 +39,13 @@ func NewAPIClient(config *conf.Config, clientVersion string) *APIClient {
 		Endpoint:      config.APIEndpointURL,
 		clientVersion: clientVersion,
 	}
+	// create cookie storage:
 	client.httpClient.Jar, _ = cookiejar.New(nil)
+
+	// disable automatic redirects
+	client.httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
 
 	if config.InsecureHTTPS {
 		fmt.Println("\033[1mWARNING:\033[0m running in insecure mode!")
@@ -53,10 +59,32 @@ func NewAPIClient(config *conf.Config, clientVersion string) *APIClient {
 // Sends the version of the client to the server and receives a session
 // cookie. Every new API conversation must start here
 func (this *APIClient) CheckVersion() error {
-	resp, err := this.GET("/api/version")
-	if err != nil {
-		log.Error(err)
-		return trace.Wrap(err)
+	var (
+		resp *http.Response
+		err  error
+	)
+	const maxRedirects = 2
+
+	for i := 0; i <= maxRedirects; i++ {
+		log.Infof("Getting version from %s", this.Endpoint)
+		// Request server's version (and report ours):
+		resp, err = this.GET("/api/version")
+		if err != nil {
+			log.Error(err)
+			return trace.Wrap(err)
+		}
+		// Redirect to another less busy server?
+		if resp.StatusCode == http.StatusTemporaryRedirect {
+			ep := resp.Header.Get("Location")
+			if ep == "" {
+				return trace.Errorf("Invalid redirect from the server")
+			}
+			if this.Endpoint, err = url.Parse(ep); err != nil {
+				return trace.Errorf("Invalid redirect from the server to '%s'", ep)
+			}
+			continue
+		}
+		break
 	}
 	// HTTP error?
 	if resp.StatusCode != http.StatusOK {
@@ -72,18 +100,6 @@ func (this *APIClient) CheckVersion() error {
 	// display server-supplied warning message:
 	if sv.WarningMsg != "" {
 		fmt.Println("\033[1mWARNING:\033[0m", sv.WarningMsg)
-	}
-	// change the endpoint if requested:
-	if sv.Endpoint != "" {
-		u := &url.URL{
-			Scheme: "https",
-			Host:   this.Endpoint.Host,
-			Path:   "/api",
-		}
-		cookies := this.httpClient.Jar.Cookies(u)
-		u.Host = sv.Endpoint
-		this.Endpoint.Host = sv.Endpoint
-		this.httpClient.Jar.SetCookies(u, cookies)
 	}
 	log.Infof("Connecting to https://%s", this.Endpoint.Host)
 	return nil

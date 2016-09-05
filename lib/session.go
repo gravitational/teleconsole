@@ -58,10 +58,6 @@ type ServerVersion struct {
 
 	// clients must show this warning message to users if it's not empty
 	WarningMsg string `json:"warn_msg"`
-
-	// server may "redirect" the client to use this endpoint
-	// instead:
-	Endpoint string `json:"endpoint"`
 }
 
 func (s *Session) GetNodeHostPort() (host string, port int, err error) {
