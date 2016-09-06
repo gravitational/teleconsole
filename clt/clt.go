@@ -12,6 +12,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/gravitational/teleport/integration"
 	"github.com/gravitational/teleport/lib/client"
+	tservice "github.com/gravitational/teleport/lib/service"
 
 	"github.com/gravitational/teleconsole/conf"
 	"github.com/gravitational/teleconsole/lib"
@@ -85,7 +86,12 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 
 	// start the local teleport server instance initialized to trust the newly created
 	// singnle-user proxy:
-	if err = local.Create(proxySession.Secrets.AsSlice(), true, nil); err != nil {
+	tconf := tservice.MakeDefaultConfig()
+	tconf.SSH.Enabled = true
+	tconf.Console = nil
+	tconf.Auth.NoAudit = true
+	tconf.Proxy.DisableWebUI = true
+	if err = local.CreateEx(proxySession.Secrets.AsSlice(), tconf); err != nil {
 		log.Error(err)
 		return trace.Wrap(err)
 	}
