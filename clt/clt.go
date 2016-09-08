@@ -61,11 +61,14 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 		log.Error(err)
 		return trace.Wrap(err)
 	}
-	hostName, err := os.Hostname()
-	if err != nil {
-		log.Error(err)
-		return trace.Wrap(err)
-	}
+	/*
+		hostName, err := os.Hostname()
+		if err != nil {
+			log.Error(err)
+			return trace.Wrap(err)
+		}
+	*/
+	hostName := "localhost"
 	// create a new (local) teleport server instance and add ourselves as a user to it:
 	fmt.Printf("Starting local SSH server on %s...\n", hostName)
 	local := integration.NewInstance(DefaultSiteName, hostName, ports, nil, nil)
