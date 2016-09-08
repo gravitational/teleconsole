@@ -104,7 +104,7 @@ And here is what happens when you type `teleconsole join session-id`:
 <li>The proxy forwards the connection through the tunnel created in step 3 to your machine.</li>
 </ol>
 
-![Teleconsole Diagram](docs/diagram.png)
+![Teleconsole Diagram](docs/teleconsole-diagram-v2.png)
 
 
 ### CLI Reference
