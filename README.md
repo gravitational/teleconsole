@@ -35,7 +35,7 @@ Your friend can join in either by clicking on a link, or by typing:
 Now you are both using the same terminal session running on your machine, even if 
 both of you are on separate networks separated by NAT.
 
-You can watch a [30 second video](https://www.youtube.com/watch?v=fA5Wt79GizA&vq=hd1080&rel=0) 
+You can watch a [30 second video](https://www.youtube.com/watch?v=R8CnrnquS_s&vq=hd1080&rel=0) 
 of how this works. Here's the simplified animation:
 
 ![Teleconsole animation](docs/teleconsole-animated.gif)
