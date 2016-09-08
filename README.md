@@ -1,13 +1,18 @@
 # Teleconsole
 
-Teleconsole is a free service to share your terminal session with people you trust. 
-Your friends can join via a command line using SSH or by using their browser.
+[Teleconsole](https://www.teleconsole.com/) is a free service to share your terminal session with people you trust. 
+Your friends can join via a command line using SSH or by using their browser. 
 
 ### Installing
 
 Download the latest binaries for your platform [here](https://github.com/gravitational/teleconsole/releases) 
 or you can build it from source.
 
+Quick installation for the impatient:
+
+```
+curl https://www.teleconsole.com/get.sh | sh
+```
 
 ### Quick Start
 
