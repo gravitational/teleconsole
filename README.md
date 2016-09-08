@@ -1,7 +1,8 @@
 # Teleconsole
 
 [Teleconsole](https://www.teleconsole.com/) is a free service to share your terminal session with people you trust. 
-Your friends can join via a command line using SSH or by using their browser. 
+Your friends can join via a command line using SSH or by using their browser. Use it when two parties are separated by NAT
+and you cannot SSH directly.
 
 ### Installing
 
