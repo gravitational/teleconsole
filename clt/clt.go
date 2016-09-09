@@ -61,13 +61,6 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 		log.Error(err)
 		return trace.Wrap(err)
 	}
-	/*
-		hostName, err := os.Hostname()
-		if err != nil {
-			log.Error(err)
-			return trace.Wrap(err)
-		}
-	*/
 	hostName := "localhost"
 	// create a new (local) teleport server instance and add ourselves as a user to it:
 	fmt.Printf("Starting local SSH server on %s...\n", hostName)
@@ -123,7 +116,6 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 			log.Error(err)
 			return true, err
 		}
-
 		// now lets see how many clients the server sees (should be at 1 - ourselves)
 		fmt.Println("Checking status of the SSH tunnel...")
 		var brokenSessionError = fmt.Errorf("SSH tunnel cannot be established, please try again.")
@@ -139,7 +131,6 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 			if len(sessionStats.Parties) > 0 {
 				fmt.Printf("\n\rYour Teleconsole ID: \033[1m%s\033[0m\n\rWebUI for this session: %v/s/%s\n\rTo stop broadcasting, exit current shell by typing 'exit' or closing the window.\n\r",
 					api.SessionID, api.friendlyProxyURL(), api.SessionID)
-				localClient.ExitMsg = "You have ended your session broadcast and the SSH tunnel is closed."
 				return false, nil
 			}
 		}
@@ -150,6 +141,8 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 	err = localClient.SSH(cmd, false, nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
+	} else {
+		fmt.Println("You have ended your session broadcast and the SSH tunnel is closed.")
 	}
 	return nil
 }
