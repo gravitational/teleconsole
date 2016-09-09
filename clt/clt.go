@@ -110,7 +110,7 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 
 	// Define "shell created" callback
 	localClient.OnShellCreated = func(shell io.ReadWriteCloser) (exit bool, err error) {
-		// publish the session (when its ready) so the server-side disposable
+		// publish the session (when it's ready) so the server-side disposable
 		// proxy will locate this client by a session ID
 		if err = publishSession(local, api); err != nil {
 			log.Error(err)

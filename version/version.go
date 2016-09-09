@@ -2,7 +2,7 @@
 package version
 
 const (
-	Version = "0.2.1-beta"
+	Version = "0.2.0-beta"
 )
 
 var Gitref, BuildDate string
