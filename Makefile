@@ -6,7 +6,7 @@
 #   - run `make release` to create and push the new git tag
 
 # To bump the version, edit this variable and run `make version`
-export VERSION=0.2.0-beta
+export VERSION=0.2.2-beta
 OUT=out/teleconsole
 GOSRC=$(shell find -name "*.go" -print)
 

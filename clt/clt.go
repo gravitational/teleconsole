@@ -138,7 +138,7 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 	}
 
 	// SSH into ourselves (we'll try a few times)
-	err = localClient.SSH(cmd, false, nil)
+	err = localClient.SSH(cmd, false)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 	} else {
