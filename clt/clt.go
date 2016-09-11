@@ -3,8 +3,10 @@ package clt
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/user"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -225,37 +227,49 @@ func Join(c *conf.Config, api *APIClient, sid string) error {
 	if c.ForwardPort != nil {
 		return trace.Errorf("-f cannot be used with join")
 	}
-
 	red := color.New(color.FgHiBlue).SprintFunc()
 	fmt.Printf("%s joining session...\n\r", red("Teleconsole:"))
 
+	// request credentials from the proxy:
 	session, err := api.GetSessionDetails(sid)
 	if err != nil {
 		log.Error(err)
 		return trace.Wrap(err)
 	}
-
+	/*
+		for _, u := range session.Secrets.Users {
+			// session did not come with pre-generated user credentials?
+			// this must be a protected session and we're supposed to use
+			// our own key:
+			if len(u.Key.Priv) == 0 {
+				key, err := readLocalKey()
+				if err != nil {
+					return trace.Wrap(err)
+				}
+				u.Key.Priv = key.Priv
+				u.Key.Pub = key.Pub
+			}
+		}
+	*/
 	// session's proxy host is never configured properly (because the server
 	// who returned it does not know which DNS name it's accessible by).
 	// replace host, keep ports:
 	session.ProxyHostPort = lib.ReplaceHost(session.ProxyHostPort, api.Endpoint.Host)
 
+	// if this session offers a "port forwarding invite", always configure it
+	// to be accessible via 127.0.0.1:9000 (to be made configurable later)
 	if session.ForwardedPort != nil {
 		session.ForwardedPort.SrcIP = "127.0.0.1"
 		session.ForwardedPort.SrcPort = 9000
 		c.ForwardPorts = []client.ForwardedPort{*session.ForwardedPort}
-	}
-
-	if session.ForwardedPort != nil {
 		printPortInvite(session.Login, session.ForwardedPort)
 	}
-
+	// these are target host's node/port (machine where the invite came from)
 	nodeHost, nodePort, err := session.GetNodeHostPort()
 	if err != nil {
-		log.Error(err)
 		return trace.Wrap(err)
 	}
-
+	// create a new SSH client
 	tc, err := client.NewClient(&client.Config{
 		Username:           session.Login,
 		ProxyHost:          session.ProxyHostPort,
@@ -268,10 +282,9 @@ func Join(c *conf.Config, api *APIClient, sid string) error {
 		LocalForwardPorts:  c.ForwardPorts,
 	})
 	if err != nil {
-		log.Error(err)
 		return trace.Wrap(err)
 	}
-
+	// configure it to trust the proxy:
 	cas := session.Secrets.GetCAs()
 	for i := range cas {
 		if err = tc.AddTrustedCA(&cas[i]); err != nil {
@@ -279,7 +292,8 @@ func Join(c *conf.Config, api *APIClient, sid string) error {
 			return trace.Wrap(err)
 		}
 	}
-
+	// initialize it with the user credentials we've received
+	// from the proxy session:
 	for _, u := range session.Secrets.Users {
 		if err = tc.AddKey(nodeHost, u.Key); err != nil {
 			log.Error(err)
@@ -288,12 +302,43 @@ func Join(c *conf.Config, api *APIClient, sid string) error {
 	}
 	// try to join up to 5 times:
 	for i := 0; i < 5; i++ {
-		err = tc.Join(tsession.ID(session.TSID), nil)
-		if err == nil {
+		if err = tc.Join(tsession.ID(session.TSID), nil); err != nil {
 			break
 		}
 		log.Warning(err)
 		time.Sleep(time.Second)
 	}
 	return trace.Wrap(err)
+}
+
+// readLocalKey reads ~/.ssh/id_rsa.pub (or equivalent) and returns it
+func readLocalKey() (*client.Key, error) {
+	// find all .pub (AKA identity) files in $HOME/.ssh
+	me, err := user.Current()
+	if err != nil {
+		return nil, trace.Wrap(err, "failed to determine the current user")
+	}
+	keys, err := filepath.Glob(filepath.Join(me.HomeDir, ".ssh", "*.pub"))
+	if err != nil {
+		return nil, trace.Wrap(err, "cannot determine where your SSH public key is")
+	}
+	if len(keys) == 0 {
+		return nil, trace.Errorf("This session requires a public SSH key.\n" +
+			"Use -i flag to specify an identity file")
+	}
+	// if multiple .pub files were found, use the 1st one:
+	keyFile := keys[0]
+	if len(keys) > 1 {
+		log.Warnf("Multiple identity files found. Using %s", keyFile)
+	}
+	// reading the public key:
+	key := new(client.Key)
+	if key.Pub, err = ioutil.ReadFile(keyFile); err != nil {
+		return nil, trace.Wrap(err)
+	}
+	// reading the private key:
+	if key.Priv, err = ioutil.ReadFile(keyFile[:len(keyFile)-len(".pub")]); err != nil {
+		return nil, trace.Wrap(err)
+	}
+	return key, nil
 }

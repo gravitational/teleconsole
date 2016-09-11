@@ -161,6 +161,7 @@ func (this *APIClient) RequestNewSession(
 func (this *APIClient) PublishSessionID(sid session.ID) error {
 	resp, err := this.POST("/api/session/"+this.SessionID,
 		"text/plain", strings.NewReader(sid.String()))
+	defer resp.Body.Close()
 	// HTTP error:
 	if resp.StatusCode != http.StatusOK {
 		return trace.Wrap(makeHTTPError(resp))
@@ -168,22 +169,27 @@ func (this *APIClient) PublishSessionID(sid session.ID) error {
 	return err
 }
 
+// GetSessionDetails requests the session details (keys) for a given session
+// from the proxy. The proxy always sends its host public key, and if the
+// session is anonymous, it also sends single-use user keys.
+//
+// If a session requres a key, a client won't receive them here, he will have
+// to use his own from ~/.ssh
 func (this *APIClient) GetSessionDetails(wsid string) (*lib.Session, error) {
 	resp, err := this.GET("/api/sessions/" + wsid)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
+	defer resp.Body.Close()
 	// HTTP error:
 	if resp.StatusCode != http.StatusOK {
 		return nil, trace.Wrap(makeHTTPError(resp))
 	}
-
 	var s lib.Session
 	decoder := json.NewDecoder(resp.Body)
 	if err = decoder.Decode(&s); err != nil {
 		return nil, trace.Wrap(err)
 	}
-
 	return &s, nil
 }
 
@@ -193,17 +199,16 @@ func (this *APIClient) GetSessionStats(wsid string) (*lib.SessionStats, error) {
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
+	defer resp.Body.Close()
 	// HTTP error:
 	if resp.StatusCode != http.StatusOK {
 		return nil, trace.Wrap(makeHTTPError(resp))
 	}
-
 	var s lib.SessionStats
 	decoder := json.NewDecoder(resp.Body)
 	if err = decoder.Decode(&s); err != nil {
 		return nil, trace.Wrap(err)
 	}
-
 	return &s, nil
 }
 
