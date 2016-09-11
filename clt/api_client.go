@@ -111,9 +111,8 @@ func (this *APIClient) CheckVersion() error {
 // The server will create a disposable SSH proxy pre-configured to trust this instance
 func (this *APIClient) RequestNewSession(
 	login string,
-	fport *client.ForwardedPort,
-	localTeleport *integration.TeleInstance) (*lib.Session, error) {
-
+	secrets integration.InstanceSecrets,
+	hostPort string, fport *client.ForwardedPort) (*lib.Session, error) {
 	log.Infof("Requesting a new session for %v forwarding %v", login, fport)
 
 	// generate a random session ID:
@@ -123,17 +122,15 @@ func (this *APIClient) RequestNewSession(
 		log.Error(err)
 		return nil, trace.Wrap(err)
 	}
-
 	// create a session here on the client, pack our trusted secrets to it and send it
 	// to the server via HTTPS:
 	session := &lib.Session{
 		ID:            this.SessionID,
-		Secrets:       localTeleport.Secrets,
+		Secrets:       secrets,
 		Login:         login,
-		NodeHostPort:  net.JoinHostPort(localTeleport.Hostname, localTeleport.GetPortSSH()),
+		NodeHostPort:  hostPort,
 		ForwardedPort: fport,
 	}
-
 	// POST http://server/sessions
 	sessionBytes, err := json.Marshal(session)
 	if err != nil {

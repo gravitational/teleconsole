@@ -39,6 +39,11 @@ type Config struct {
 
 	// Forward-by-invite:
 	ForwardPort *client.ForwardedPort
+
+	// IdentityFile contains a full file path of the SSH key file to use.
+	// For "start session" it points to a public key, but for "join" it
+	// points to a private key.
+	IdentityFile string
 }
 
 // Get() returns Teleconsole configuration: default values overwritten

@@ -3,7 +3,7 @@ package clt
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
+	"net"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -47,40 +47,56 @@ var (
 // 4. Launches shell. When the shell exits, the SSH session is also terminated
 //    disconnecting all parties.
 func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
+	hostName := "localhost"
+	var (
+		me, them *lib.Identity
+		err      error
+	)
 	if c.ForwardPorts != nil {
 		return trace.Errorf("-L must be used with join")
 	}
 	// check API connectivity and compatibility
-	if err := api.CheckVersion(); err != nil {
+	if err = api.CheckVersion(); err != nil {
 		return trace.Wrap(err)
 	}
-	u, err := user.Current()
+	// create the anonymous local user identity for logging into ourselves
+	me, err = lib.MakeIdentity("")
 	if err != nil {
 		return trace.Wrap(err)
 	}
+	// create a "invitee" identity (for joining parties) and if
+	// no identity was specified via -i flag, use the
+	// generated anonymous one from above
+	if c.IdentityFile != "" {
+		them, err = lib.MakeIdentity(c.IdentityFile)
+		if err != nil {
+			return trace.Wrap(err)
+		}
+	} else {
+		them = me
+	}
+	// pre-allocate a few open ports for launching an SSH server
 	ports, err := lib.GetFreePorts(5)
 	if err != nil {
-		log.Error(err)
 		return trace.Wrap(err)
 	}
-	hostName := "localhost"
 	// create a new (local) teleport server instance and add ourselves as a user to it:
 	fmt.Printf("Starting local SSH server on %s...\n", hostName)
-	local := integration.NewInstance(DefaultSiteName, hostName, ports, nil, nil)
-	local.AddUser(u.Username, []string{u.Username})
+	localServer := integration.NewInstance(DefaultSiteName, hostName, ports, nil, nil)
+	localServer.Secrets.Users = them.AnnounceUsers()
 
 	// request Teleconsole server to create a remote teleport proxy we can
 	// broadcast our connection through:
-	fmt.Printf("Requesting a disposable SSH proxy for %s...\n", u.Username)
-	proxySession, err := api.RequestNewSession(u.Username, c.ForwardPort, local)
+	fmt.Printf("Requesting a disposable SSH proxy for %s...\n", me.Username)
+	ourHostPort := net.JoinHostPort(localServer.Hostname, localServer.GetPortSSH())
+	sess, err := api.RequestNewSession(me.Username, localServer.Secrets, ourHostPort, c.ForwardPort)
 	if err != nil {
-		log.Error(err)
 		return trace.Wrap(err)
 	}
+
 	// Assign the proper server to the generated secrets (they'll be used to configure
 	// the reverse SSH tunnel to it)
-	serverURL := api.Endpoint
-	proxySession.Secrets.ListenAddr = lib.ReplaceHost(proxySession.Secrets.ListenAddr, serverURL.Host)
+	sess.Secrets.ListenAddr = lib.ReplaceHost(sess.Secrets.ListenAddr, api.Endpoint.Host)
 
 	// start the local teleport server instance initialized to trust the newly created
 	// singnle-user proxy:
@@ -89,32 +105,32 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 	tconf.Console = nil
 	tconf.Auth.NoAudit = true
 	tconf.Proxy.DisableWebUI = true
-	if err = local.CreateEx(proxySession.Secrets.AsSlice(), tconf); err != nil {
-		log.Error(err)
+	trustedSecrets := sess.Secrets
+	for uname, user := range me.LoginUsers() {
+		trustedSecrets.Users[uname] = user
+	}
+	localServer.Secrets.Users = trustedSecrets.Users
+	if err = localServer.CreateEx(trustedSecrets.AsSlice(), tconf); err != nil {
 		return trace.Wrap(err)
 	}
-
-	log.Debugf("client config: %v\n", local.Config.DebugDumpToYAML())
-	if err = local.Start(); err != nil {
-		log.Error(err)
+	log.Debugf("client config: %v\n", localServer.Config.DebugDumpToYAML())
+	if err = localServer.Start(); err != nil {
 		return trace.Wrap(err)
 	}
-
 	// this will close the proxied connection:
-	defer onStopBroadcast(local)
+	defer onStopBroadcast(localServer)
 
-	port, _ := strconv.Atoi(local.GetPortSSH())
-	localClient, err := local.NewClient(u.Username, DefaultSiteName, hostName, port)
+	// create a local client to "SSH into ourselves":
+	port, _ := strconv.Atoi(localServer.GetPortSSH())
+	sshClient, err := localServer.NewClient(me.Username, DefaultSiteName, hostName, port)
 	if err != nil {
-		log.Error(err)
 		return trace.Wrap(err)
 	}
-
 	// Define "shell created" callback
-	localClient.OnShellCreated = func(shell io.ReadWriteCloser) (exit bool, err error) {
+	sshClient.OnShellCreated = func(shell io.ReadWriteCloser) (exit bool, err error) {
 		// publish the session (when it's ready) so the server-side disposable
 		// proxy will locate this client by a session ID
-		if err = publishSession(local, api); err != nil {
+		if err = publishSession(localServer, api); err != nil {
 			log.Error(err)
 			return true, err
 		}
@@ -138,11 +154,10 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 		}
 		return true, brokenSessionError
 	}
-
 	// SSH into ourselves (we'll try a few times)
-	err = localClient.SSH(cmd, false)
+	err = sshClient.SSH(cmd, false)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
+		return trace.Wrap(err)
 	} else {
 		fmt.Println("You have ended your session broadcast and the SSH tunnel is closed.")
 	}
@@ -233,29 +248,21 @@ func Join(c *conf.Config, api *APIClient, sid string) error {
 	// request credentials from the proxy:
 	session, err := api.GetSessionDetails(sid)
 	if err != nil {
-		log.Error(err)
 		return trace.Wrap(err)
 	}
-	/*
-		for _, u := range session.Secrets.Users {
-			// session did not come with pre-generated user credentials?
-			// this must be a protected session and we're supposed to use
-			// our own key:
-			if len(u.Key.Priv) == 0 {
-				key, err := readLocalKey()
-				if err != nil {
-					return trace.Wrap(err)
-				}
-				u.Key.Priv = key.Priv
-				u.Key.Pub = key.Pub
-			}
-		}
-	*/
+
+	fmt.Println(session.ToJSON())
+
 	// session's proxy host is never configured properly (because the server
 	// who returned it does not know which DNS name it's accessible by).
 	// replace host, keep ports:
 	session.ProxyHostPort = lib.ReplaceHost(session.ProxyHostPort, api.Endpoint.Host)
 
+	// apply our identity's keys to this session
+	user, err := findUserFor(session, c.IdentityFile)
+	if err != nil {
+		return trace.Wrap(err)
+	}
 	// if this session offers a "port forwarding invite", always configure it
 	// to be accessible via 127.0.0.1:9000 (to be made configurable later)
 	if session.ForwardedPort != nil {
@@ -269,13 +276,14 @@ func Join(c *conf.Config, api *APIClient, sid string) error {
 	if err != nil {
 		return trace.Wrap(err)
 	}
+
 	// create a new SSH client
 	tc, err := client.NewClient(&client.Config{
-		Username:           session.Login,
+		Username:           "one",
 		ProxyHost:          session.ProxyHostPort,
 		Host:               nodeHost,
 		HostPort:           nodePort,
-		HostLogin:          session.Login,
+		HostLogin:          "ekontsevoy",
 		InsecureSkipVerify: false,
 		KeysDir:            "/tmp/",
 		SiteName:           DefaultSiteName,
@@ -292,14 +300,9 @@ func Join(c *conf.Config, api *APIClient, sid string) error {
 			return trace.Wrap(err)
 		}
 	}
-	// initialize it with the user credentials we've received
-	// from the proxy session:
-	for _, u := range session.Secrets.Users {
-		if err = tc.AddKey(nodeHost, u.Key); err != nil {
-			log.Error(err)
-			return trace.Wrap(err)
-		}
-	}
+
+	// initialize it with the user credentials we've matched against the session:
+	tc.AddKey(nodeHost, user.Key)
 	// try to join up to 5 times:
 	for i := 0; i < 5; i++ {
 		if err = tc.Join(tsession.ID(session.TSID), nil); err != nil {
@@ -311,34 +314,60 @@ func Join(c *conf.Config, api *APIClient, sid string) error {
 	return trace.Wrap(err)
 }
 
-// readLocalKey reads ~/.ssh/id_rsa.pub (or equivalent) and returns it
-func readLocalKey() (*client.Key, error) {
-	// find all .pub (AKA identity) files in $HOME/.ssh
-	me, err := user.Current()
-	if err != nil {
-		return nil, trace.Wrap(err, "failed to determine the current user")
+func findUserFor(session *lib.Session, fp string) (u *integration.User, err error) {
+	// is this a session with a built-in anonymous user we can use?
+	for _, user := range session.Secrets.Users {
+		if len(user.Key.Priv) > 0 {
+			return user, nil
+		}
 	}
-	keys, err := filepath.Glob(filepath.Join(me.HomeDir, ".ssh", "*.pub"))
-	if err != nil {
-		return nil, trace.Wrap(err, "cannot determine where your SSH public key is")
+	matchingUserFor := func(i *lib.Identity) bool {
+		for un, user := range session.Secrets.Users {
+			priv := i.PrivateKeyFor(user.Key.Pub)
+			if priv != nil {
+				u = &integration.User{
+					Username:      un,
+					AllowedLogins: user.AllowedLogins,
+					Key: &client.Key{
+						Pub:  user.Key.Pub,
+						Priv: priv,
+						Cert: user.Key.Cert,
+					},
+				}
+				return true
+			}
+		}
+		err = trace.Errorf("The identity file does not match the session key")
+		return false
 	}
-	if len(keys) == 0 {
-		return nil, trace.Errorf("This session requires a public SSH key.\n" +
-			"Use -i flag to specify an identity file")
+	// try given identity file
+	if fp != "" {
+		i, err := lib.MakeIdentityFromFile(fp)
+		if err != nil {
+			return nil, trace.Wrap(err)
+		}
+		if matchingUserFor(i) {
+			return u, nil
+		}
+		// look in ~/.ssh
+	} else {
+		me, err := user.Current()
+		if err != nil {
+			return nil, trace.Wrap(err)
+		}
+		matches, err := filepath.Glob(filepath.Join(me.HomeDir, ".ssh", "id_*"))
+		if err != nil {
+			return nil, trace.Wrap(err)
+		}
+		for _, fp := range matches {
+			i, _ := lib.MakeIdentityFromFile(fp)
+			if i != nil && matchingUserFor(i) {
+				fmt.Println("Matching key:", fp)
+				return u, nil
+			}
+		}
 	}
-	// if multiple .pub files were found, use the 1st one:
-	keyFile := keys[0]
-	if len(keys) > 1 {
-		log.Warnf("Multiple identity files found. Using %s", keyFile)
-	}
-	// reading the public key:
-	key := new(client.Key)
-	if key.Pub, err = ioutil.ReadFile(keyFile); err != nil {
-		return nil, trace.Wrap(err)
-	}
-	// reading the private key:
-	if key.Priv, err = ioutil.ReadFile(keyFile[:len(keyFile)-len(".pub")]); err != nil {
-		return nil, trace.Wrap(err)
-	}
-	return key, nil
+	return nil, trace.Errorf("\nTo join this session you must provide a valid SSH key.\n" +
+		"No matching keys were found on your machine in ~/.ssh\n" +
+		"Try specifying an SSH identity file with -i flag\n")
 }

@@ -78,6 +78,7 @@ func NewApp(fs *flag.FlagSet) (*App, error) {
 	insecure := fs.Bool("insecure", false, "")
 	forwardPorts := fs.String("L", "", "")
 	forwardAddr := fs.String("f", "", "")
+	identityFile := fs.String("i", "", "")
 
 	fs.Usage = printHelp
 	fs.Parse(os.Args[1:])
@@ -126,6 +127,8 @@ func NewApp(fs *flag.FlagSet) (*App, error) {
 			return nil, trace.Errorf("Invalid forwarding addres spec: %v\nExamples: localhost:5000 or http://gravitational.com", err)
 		}
 	}
+	// identity file:
+	config.IdentityFile = *identityFile
 
 	config.Verbosity = verbosity
 	config.RunCommand = *runCommand
@@ -173,7 +176,8 @@ Flags:
    -v            Verbose logging
    -vv           Extra verbose logging (debug mode)
    -s host:port  Teleconsole server address [teleconsole.com]
-
+   -i source     Identity to share a session with. Can be a Github user or 
+                 an identity file like ~/.ssh/id_rsa
 Commands:
     help               Print this help
     join [session-id]  Join active session
@@ -194,6 +198,11 @@ Examples:
 
     Joins the existing session requesting to forward gravitational.com:80
     to local port 5000.
+
+  > teleconsole -i kontsevoy
+
+    Starts a session shared only with "kontsevoy" Github user. Only a party
+    with a private SSH key for "kontsevoy" will be able to join
 
 Made by Gravitational Inc http://gravitational.com`)
 }

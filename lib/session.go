@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"encoding/json"
 	"net"
 	"strconv"
 	"time"
@@ -70,4 +71,14 @@ func (s *Session) GetNodeHostPort() (host string, port int, err error) {
 		return "", 0, err
 	}
 	return h, port, nil
+}
+
+// ToJSON returns a nicely formatted JSON representation of the session
+// (use it only for odebugging since there's no error handling)
+func (s *Session) ToJSON() string {
+	bytes, err := json.MarshalIndent(s, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return string(bytes)
 }
