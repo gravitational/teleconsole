@@ -147,8 +147,8 @@ func (this *App) Usage() {
 }
 
 func (this *App) Join() error {
-	if len(this.Args) == 0 {
-		log.Fatal("Error: need an argument: session ID")
+	if len(this.Args) < 2 {
+		return trace.Errorf("Error: need an argument: session ID")
 	}
 	return Join(this.conf, this.client, this.Args[1])
 }

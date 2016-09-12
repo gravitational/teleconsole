@@ -87,7 +87,11 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 
 	// request Teleconsole server to create a remote teleport proxy we can
 	// broadcast our connection through:
-	fmt.Printf("Requesting a disposable SSH proxy for %s...\n", me.Username)
+	guestName := me.Username
+	if !them.Anonymous {
+		guestName = c.IdentityFile
+	}
+	fmt.Printf("Requesting a disposable SSH proxy for %s...\n", guestName)
 	ourHostPort := net.JoinHostPort(localServer.Hostname, localServer.GetPortSSH())
 	sess, err := api.RequestNewSession(me.Username, localServer.Secrets, ourHostPort, c.ForwardPort)
 	if err != nil {
@@ -147,8 +151,13 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 			}
 			// found ourserlves!
 			if len(sessionStats.Parties) > 0 {
-				fmt.Printf("\n\rYour Teleconsole ID: \033[1m%s\033[0m\n\rWebUI for this session: %v/s/%s\n\rTo stop broadcasting, exit current shell by typing 'exit' or closing the window.\n\r",
-					api.SessionID, api.friendlyProxyURL(), api.SessionID)
+				fmt.Printf("\n\rYour Teleconsole ID: \033[1m%s\033[0m\n\r", api.SessionID)
+				if them.Anonymous {
+					fmt.Printf("WebUI for this session: %v/s/%s\n\rTo stop broadcasting, exit current shell by typing 'exit' or closing the window.\n\r",
+						api.friendlyProxyURL(), api.SessionID)
+				} else {
+					fmt.Printf("WebUI is not available for key-restricted sessions\n\r")
+				}
 				return false, nil
 			}
 		}
@@ -250,9 +259,6 @@ func Join(c *conf.Config, api *APIClient, sid string) error {
 	if err != nil {
 		return trace.Wrap(err)
 	}
-
-	fmt.Println(session.ToJSON())
-
 	// session's proxy host is never configured properly (because the server
 	// who returned it does not know which DNS name it's accessible by).
 	// replace host, keep ports:
@@ -304,8 +310,8 @@ func Join(c *conf.Config, api *APIClient, sid string) error {
 	// initialize it with the user credentials we've matched against the session:
 	tc.AddKey(nodeHost, user.Key)
 	// try to join up to 5 times:
-	for i := 0; i < 5; i++ {
-		if err = tc.Join(tsession.ID(session.TSID), nil); err != nil {
+	for i := 0; i < 3; i++ {
+		if err = tc.Join(tsession.ID(session.TSID), nil); err == nil {
 			break
 		}
 		log.Warning(err)
