@@ -113,7 +113,11 @@ func NewApp(fs *flag.FlagSet) (*App, error) {
 		if err = config.SetServer(*serverFlag); err != nil {
 			return nil, trace.Wrap(err)
 		}
+	} else {
+		config.SetServer(FindFastestEndpoint())
 	}
+	return nil, trace.Errorf("stop")
+
 	// parse -L flag spec (forwarded ports)
 	if *forwardPorts != "" {
 		config.ForwardPorts, err = client.ParsePortForwardSpec([]string{*forwardPorts})
