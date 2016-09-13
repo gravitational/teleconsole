@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/gravitational/teleconsole/conf"
+	"github.com/gravitational/teleconsole/geo"
 	"github.com/gravitational/teleconsole/lib"
 	"github.com/gravitational/teleconsole/version"
 
@@ -102,6 +103,7 @@ func NewApp(fs *flag.FlagSet) (*App, error) {
 	teleport.ReverseTunnelAgentHeartbeatPeriod = SyncRefreshInterval * 2
 	teleport.ServerHeartbeatTTL = SyncRefreshInterval * 2
 
+	// this disables costly Teleport "key pool"
 	native.PrecalculatedKeysNum = 0
 
 	// read configuration from rcfile in ~/
@@ -111,7 +113,7 @@ func NewApp(fs *flag.FlagSet) (*App, error) {
 	}
 	// apply CLI flags to the config:
 	if *serverFlag != "" {
-		if err = config.SetServer(*serverFlag); err != nil {
+		if err = config.SetEndpointHost(*serverFlag); err != nil {
 			return nil, trace.Wrap(err)
 		}
 	}
@@ -152,10 +154,16 @@ func (this *App) Join() error {
 	if len(this.Args) < 2 {
 		return trace.Errorf("Error: need an argument: session ID")
 	}
-	// look at a session 1-byte prefix, see if it matches any of the
+	sid := this.Args[1]
 	if !this.IsEndpointSpecified() {
+		var epHost string
+		epHost, sid = geo.EndpointForSession(sid)
+		if epHost != "" {
+			this.conf.SetEndpointHost(epHost)
+			this.client.Endpoint = this.conf.APIEndpointURL
+		}
 	}
-	return Join(this.conf, this.client, this.Args[1])
+	return Join(this.conf, this.client, sid)
 }
 
 // Start starts a new session. This is what happens by default when you launch
@@ -164,7 +172,7 @@ func (this *App) Join() error {
 func (this *App) Start() error {
 	// are we using the default endpoint? if so, try to find the fastest one:
 	if !this.IsEndpointSpecified() {
-		err := this.conf.SetServer(FindFastestEndpoint())
+		err := this.conf.SetEndpointHost(geo.FindFastestEndpoint().Hostname)
 		if err != nil {
 			return trace.Wrap(err)
 		}

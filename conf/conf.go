@@ -12,6 +12,8 @@ import (
 	"github.com/gravitational/teleconsole/lib"
 	"github.com/gravitational/teleport/lib/client"
 	"github.com/gravitational/trace"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // Config stores the configuration of Teleconsole process
@@ -68,14 +70,15 @@ func Get() (c *Config, err error) {
 	// apply ini-file vlaues to config:
 	serverHostPort := i.GetOrDefault("", "server",
 		net.JoinHostPort(DefaultServerHost, DefaultServerPort))
-	err = c.SetServer(serverHostPort)
+	err = c.SetEndpointHost(serverHostPort)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
 	return c, nil
 }
 
-func (this *Config) SetServer(hostPort string) (err error) {
+// SetEndpointHost sets the Teleconsole server host:port pair to the configuration
+func (this *Config) SetEndpointHost(hostPort string) (err error) {
 	var host, port string
 	// missing port spec?
 	if strings.LastIndex(hostPort, ":") < 0 {
@@ -90,4 +93,17 @@ func (this *Config) SetServer(hostPort string) (err error) {
 	// validate endpoint URL:
 	this.APIEndpointURL, err = url.Parse(fmt.Sprintf("https://%s:%s", host, port))
 	return trace.Wrap(err)
+}
+
+// GetEndpointHost returns the hostname of the Teleconsole server endpoint
+// (without port)
+func (this *Config) GetEndpointHost() string {
+	if this.APIEndpointURL == nil {
+		return DefaultServerHost
+	}
+	host, _, err := net.SplitHostPort(this.APIEndpointURL.Host)
+	if err != nil {
+		log.Error(err)
+	}
+	return host
 }

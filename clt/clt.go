@@ -17,6 +17,7 @@ import (
 	tservice "github.com/gravitational/teleport/lib/service"
 
 	"github.com/gravitational/teleconsole/conf"
+	"github.com/gravitational/teleconsole/geo"
 	"github.com/gravitational/teleconsole/lib"
 
 	tsession "github.com/gravitational/teleport/lib/session"
@@ -91,7 +92,7 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 	if !them.Anonymous {
 		guestName = c.IdentityFile
 	}
-	fmt.Printf("Requesting a disposable SSH proxy for %s...\n", guestName)
+	fmt.Printf("Requesting a disposable SSH proxy on %s for %s...\n", c.GetEndpointHost(), guestName)
 	ourHostPort := net.JoinHostPort(localServer.Hostname, localServer.GetPortSSH())
 	sess, err := api.RequestNewSession(me.Username, localServer.Secrets, ourHostPort, c.ForwardPort)
 	if err != nil {
@@ -151,7 +152,7 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 			}
 			// found ourserlves!
 			if len(sessionStats.Parties) > 0 {
-				fmt.Printf("\n\rYour Teleconsole ID: \033[1m%s\033[0m\n\r", api.SessionID)
+				fmt.Printf("\n\rYour Teleconsole ID: \033[1m%s%s\033[0m\n\r", geo.SesionPrefixFor(c.GetEndpointHost()), api.SessionID)
 				if them.Anonymous {
 					fmt.Printf("WebUI for this session: %v/s/%s\n\rTo stop broadcasting, exit current shell by typing 'exit' or closing the window.\n\r",
 						api.friendlyProxyURL(), api.SessionID)

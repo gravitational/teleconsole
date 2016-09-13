@@ -15,6 +15,7 @@ import (
 
 	"golang.org/x/crypto/ssh"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/gravitational/teleport/integration"
 	"github.com/gravitational/teleport/lib/auth/native"
 	"github.com/gravitational/teleport/lib/client"
@@ -81,6 +82,7 @@ func MakeIdentity(idPath string) (*Identity, error) {
 		i.Logins, err = loginsFrom(idPath)
 	}
 	if err != nil {
+		logrus.Error(err)
 		return nil, trace.Wrap(err)
 	}
 	return &i, nil
@@ -205,6 +207,14 @@ type GithubKey struct {
 	Value string `json:"key"`
 }
 
+type GithubError struct {
+	Message string `json:"message"`
+}
+
+func (this GithubError) Error() string {
+	return "Error retreiving the public key from Github:\n" + this.Message
+}
+
 func githubKeysFor(username string) ([]GithubKey, error) {
 	var hc http.Client
 	resp, err := hc.Get(fmt.Sprintf("https://api.github.com/users/%s/keys", username))
@@ -212,10 +222,19 @@ func githubKeysFor(username string) ([]GithubKey, error) {
 		return nil, trace.Wrap(err)
 	}
 	defer resp.Body.Close()
+
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
+
+	if resp.StatusCode != http.StatusOK {
+		var e GithubError
+		if json.Unmarshal(bytes, &e) == nil {
+			return nil, trace.Wrap(e)
+		}
+	}
+
 	var keys []GithubKey
 	if err = json.Unmarshal(bytes, &keys); err != nil {
 		return nil, trace.Wrap(err)
