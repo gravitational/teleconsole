@@ -6,16 +6,23 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/kontsevoy/teleconsole/conf"
 )
 
 var (
-	DefaultEndpoint = "teleconsole.com"
+	DefaultEndpoint = conf.DefaultServerHost
 
-	// list of Teleconsole proxy servers.
-	Endpoints = []string{
-		DefaultEndpoint,      // US
-		"eu.teleconsole.com", // Europe
-		"as.teleconsole.com", // Asia
+	// List of Teleconsole proxy servers.
+	//
+	// This map provides the mapping of DNS names to session prefixes.
+	// This is just a usability to keep session IDs from being too long.
+	//
+	// NEVER change them! (they also must contain chars outside
+	// of 'a'..'f' range
+	Endpoints = map[string]string{
+		DefaultEndpoint:      "us", // US
+		"eu.teleconsole.com": "eu", // Europe
+		"as.teleconsole.com": "as", // Asia
 	}
 )
 
@@ -26,6 +33,7 @@ func FindFastestEndpoint() string {
 	start := time.Now()
 
 	playPong := func(endpoint string) {
+		log.Infof("GET http://%s/ping", endpoint)
 		resp, err := http.Get(fmt.Sprintf("http://%s/ping", endpoint))
 		if err == nil {
 			defer resp.Body.Close()
@@ -35,7 +43,7 @@ func FindFastestEndpoint() string {
 			}
 		}
 	}
-	for _, ep := range Endpoints {
+	for ep, _ := range Endpoints {
 		go playPong(ep)
 	}
 	timeout := time.NewTimer(time.Second * 5)
@@ -48,4 +56,8 @@ func FindFastestEndpoint() string {
 		log.Error("Timeout: none of the severs have played pong.")
 	}
 	return DefaultEndpoint
+}
+
+func SesionPrefixFor(endpoint string) string {
+	return Endpoints[endpoint]
 }

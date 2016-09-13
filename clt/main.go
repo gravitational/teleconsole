@@ -3,6 +3,7 @@ package clt
 import (
 	"flag"
 	"fmt"
+	"net"
 	"os"
 
 	"github.com/gravitational/teleconsole/conf"
@@ -113,10 +114,7 @@ func NewApp(fs *flag.FlagSet) (*App, error) {
 		if err = config.SetServer(*serverFlag); err != nil {
 			return nil, trace.Wrap(err)
 		}
-	} else {
-		config.SetServer(FindFastestEndpoint())
 	}
-	return nil, trace.Errorf("stop")
 
 	// parse -L flag spec (forwarded ports)
 	if *forwardPorts != "" {
@@ -154,11 +152,34 @@ func (this *App) Join() error {
 	if len(this.Args) < 2 {
 		return trace.Errorf("Error: need an argument: session ID")
 	}
+	// look at a session 1-byte prefix, see if it matches any of the
+	if !this.IsEndpointSpecified() {
+	}
 	return Join(this.conf, this.client, this.Args[1])
 }
 
+// Start starts a new session. This is what happens by default when you launch
+// teleconsole without parameters
+//
 func (this *App) Start() error {
+	// are we using the default endpoint? if so, try to find the fastest one:
+	if !this.IsEndpointSpecified() {
+		err := this.conf.SetServer(FindFastestEndpoint())
+		if err != nil {
+			return trace.Wrap(err)
+		}
+		// switch to the fastest endpoint:
+		this.client.Endpoint = this.conf.APIEndpointURL
+	}
 	return StartBroadcast(this.conf, this.client, this.Args[0:])
+}
+
+// IsEndpointSpecified returns 'true' if the server endpoint has been set
+// either via -s flag, or via a config file
+func (this *App) IsEndpointSpecified() bool {
+	currentEP := this.client.Endpoint.Host
+	defaultEP := net.JoinHostPort(conf.DefaultServerHost, conf.DefaultServerPort)
+	return currentEP != defaultEP
 }
 
 func (this *App) GetConfig() *conf.Config {
