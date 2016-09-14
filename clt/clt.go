@@ -373,7 +373,8 @@ func findUserFor(session *lib.Session, fp string) (u *integration.User, err erro
 			}
 		}
 	}
-	return nil, trace.Errorf("\nTo join this session you must provide a valid SSH key.\n" +
-		"No matching keys were found on your machine in ~/.ssh\n" +
-		"Try specifying an SSH identity file with -i flag\n")
+	return nil, trace.Errorf("\nTo join this session you must provide a valid SSH key.\n"+
+		"No matching keys were found on your machine in ~/.ssh\n"+
+		"Try specifying an SSH key file with -i flag, for example:\n\n"+
+		"> teleconsole -i ./id_rsa join %s\n", session.ID)
 }
