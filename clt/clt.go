@@ -286,7 +286,7 @@ func Join(c *conf.Config, api *APIClient, sid string) error {
 	// create a new SSH client
 	tc, err := client.NewClient(&client.Config{
 		Username:           user.Username,
-		ProxyHost:          session.ProxyHostPort,
+		ProxyHostPort:      session.ProxyHostPort,
 		Host:               nodeHost,
 		HostPort:           nodePort,
 		HostLogin:          session.Login,
