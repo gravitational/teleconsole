@@ -7,6 +7,7 @@
 
 # To bump the version, edit this variable and run `make version`
 export VERSION=0.3.1
+export CGO_ENABLED=true
 OUT=out/teleconsole
 GOSRC=$(shell find -name "*.go" -print)
 
