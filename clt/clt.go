@@ -285,14 +285,13 @@ func Join(c *conf.Config, api *APIClient, sid string) error {
 	if err != nil {
 		return trace.Wrap(err)
 	}
-
 	// create a new SSH client
 	tc, err := client.NewClient(&client.Config{
-		Username:           "one",
+		Username:           user.Username,
 		ProxyHostPort:      session.ProxyHostPort,
 		Host:               nodeHost,
 		HostPort:           nodePort,
-		HostLogin:          "ekontsevoy",
+		HostLogin:          session.Login,
 		InsecureSkipVerify: false,
 		KeysDir:            "/tmp/",
 		SiteName:           DefaultSiteName,
