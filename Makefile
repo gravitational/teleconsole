@@ -13,7 +13,7 @@ GOSRC=$(shell find -name "*.go" -print)
 # Default target: out/teleconsole
 $(OUT): $(GOSRC) Makefile
 	$(MAKE) -C version
-	go build -i -ldflags -w -o $(OUT)
+	CGO_ENABLED=1 go build -i -ldflags -w -o $(OUT)
 
 # Makes a new release (pushes tags to Github)
 .PHONY:release 
