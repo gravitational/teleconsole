@@ -1,6 +1,7 @@
 package clt
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -14,6 +15,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/gravitational/teleport/integration"
 	"github.com/gravitational/teleport/lib/client"
+	"github.com/gravitational/teleport/lib/defaults"
 	tservice "github.com/gravitational/teleport/lib/service"
 
 	"github.com/gravitational/teleconsole/conf"
@@ -165,7 +167,7 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 		return true, brokenSessionError
 	}
 	// SSH into ourselves (we'll try a few times)
-	err = sshClient.SSH(cmd, false)
+	err = sshClient.SSH(context.TODO(), cmd, false)
 	if err != nil {
 		return trace.Wrap(err)
 	} else {
@@ -206,7 +208,7 @@ func publishSession(local *integration.TeleInstance, api *APIClient) error {
 	// poll for the session ID:
 	for {
 		time.Sleep(time.Millisecond * 100)
-		sessions, err := siteAPI.GetSessions()
+		sessions, err := siteAPI.GetSessions(defaults.Namespace)
 		if err != nil {
 			continue
 		}
@@ -301,7 +303,7 @@ func Join(c *conf.Config, api *APIClient, sid string) error {
 	// configure it to trust the proxy:
 	cas := session.Secrets.GetCAs()
 	for i := range cas {
-		if err = tc.AddTrustedCA(&cas[i]); err != nil {
+		if err = tc.AddTrustedCA(cas[i].V1()); err != nil {
 			log.Error(err)
 			return trace.Wrap(err)
 		}
@@ -311,7 +313,9 @@ func Join(c *conf.Config, api *APIClient, sid string) error {
 	tc.AddKey(nodeHost, user.Key)
 	// try to join up to 5 times:
 	for i := 0; i < 3; i++ {
-		if err = tc.Join(tsession.ID(session.TSID), nil); err == nil {
+		if err = tc.Join(context.TODO(),
+			defaults.Namespace,
+			tsession.ID(session.TSID), nil); err == nil {
 			break
 		}
 		log.Warning(err)
