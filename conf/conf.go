@@ -13,7 +13,7 @@ import (
 	"github.com/gravitational/teleport/lib/client"
 	"github.com/gravitational/trace"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // Config stores the configuration of Teleconsole process
