@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/gravitational/teleconsole/clt"
 	"github.com/gravitational/teleconsole/version"
 	"github.com/gravitational/trace"
