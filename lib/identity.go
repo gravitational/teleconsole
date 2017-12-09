@@ -1,9 +1,6 @@
 package lib
 
 import (
-	"crypto/dsa"
-	"crypto/ecdsa"
-	"crypto/rsa"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -178,11 +175,11 @@ func loginFromFile(fp string) (*sshLogin, error) {
 	pubKey, err := ssh.ParsePublicKey(bytes)
 	if err != nil {
 
-    // check if this was a private key and alert accordingly:
-    p, err := ssh.ParseRawPrivateKey(bytes)
-    if err == nil {
-      return nil, trace.Wrap("Private keys are no longer supported. Check https://github.com/gravitational/teleconsole/issues/19 for more details")
-    }
+		// check if this was a private key and alert accordingly:
+		_, err := ssh.ParseRawPrivateKey(bytes)
+		if err == nil {
+			return nil, trace.Wrap(err, "Private keys are no longer supported. Check https://github.com/gravitational/teleconsole/issues/19 for more details")
+		}
 
 		return nil, trace.Wrap(err)
 	}
