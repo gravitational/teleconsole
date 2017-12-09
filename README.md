@@ -189,11 +189,19 @@ For more info, drop us an email: [info@gravitational.com](mailto:info@gravitatio
 
 ## Building from source
 
+To build the binaries
 1. Clone this repository: `git clone https://github.com/gravitational/teleconsole`
-2. Install dependencies: `GOPATH=$PWD go get -v ./...`
-3. Run tests: `GOPATH=$PWD make test`
-4. Build binaries: `GOPATH=$PWD make`
+2. Install golang >= 1.7: `sudo apt install golang-1.9`
+- required for `context` (https://stackoverflow.com/a/42802790/4126114)
+2. Verify version: `go version` (e.g. `go version go1.9.2 linux/amd64`)
+2. Set `GOPATH`: `export GOPATH=$PWD`
+3. Install dependencies: `go get -v ./...`
+5. Build binaries: `make`
+
+To run tests
+3. Install test dependencies: `get get -v -t ./...`
+4. Run tests: `make test`
 
 To make a release
-- `GOPATH=$PWD make release`
+- `make release`
 - check `Makefile` for more details
