@@ -186,3 +186,14 @@ component of our commercial offering for deploying and remotely [operating SaaS 
 3rd party enterprise infrastructure](https://gravitational.com/product). 
 
 For more info, drop us an email: [info@gravitational.com](mailto:info@gravitational.com)
+
+## Building from source
+
+1. Clone this repository: `git clone https://github.com/gravitational/teleconsole`
+2. Install dependencies: `GOPATH=$PWD go get -v ./...`
+3. Run tests: `GOPATH=$PWD make test`
+4. Build binaries: `GOPATH=$PWD make`
+
+To make a release
+- `GOPATH=$PWD make release`
+- check `Makefile` for more details

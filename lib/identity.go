@@ -35,7 +35,7 @@ import (
 //    and logs in using it.
 //
 // 2. A named identity uses a user-supplied SSH key, either via github handle
-//    or as a file (like ~/.ssh/id_rsa). Named identities private key never
+//    or as a file (like ~/.ssh/id_rsa.pub). Named identities private key never
 //    leaves the machine, but the joining party is supposed to have a private
 //    key on their machine to be able to join.
 //
@@ -173,26 +173,20 @@ func loginFromFile(fp string) (*sshLogin, error) {
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	// parse the private key:
-	p, err := ssh.ParseRawPrivateKey(bytes)
+	// parse the public key:
+  // https://godoc.org/golang.org/x/crypto/ssh#ParsePublicKey
+	pubKey, err := ssh.ParsePublicKey(bytes)
 	if err != nil {
+
+    // check if this was a private key and alert accordingly:
+    p, err := ssh.ParseRawPrivateKey(bytes)
+    if err == nil {
+      return nil, trace.Wrap("Private keys are no longer supported. Check https://github.com/gravitational/teleconsole/issues/19 for more details")
+    }
+
 		return nil, trace.Wrap(err)
 	}
-	// derive the public key from the private one:
-	var pubKey ssh.PublicKey = nil
-	switch pk := p.(type) {
-	case *rsa.PrivateKey:
-		pubKey, err = ssh.NewPublicKey(&pk.PublicKey)
-	case *dsa.PrivateKey:
-		pubKey, err = ssh.NewPublicKey(&pk.PublicKey)
-	case *ecdsa.PrivateKey:
-		pubKey, err = ssh.NewPublicKey(&pk.PublicKey)
-	default:
-		return nil, trace.Errorf("Unsupported SSH key format")
-	}
-	if err != nil {
-		return nil, trace.Wrap(err)
-	}
+
 	return &sshLogin{
 		Username: filepath.Base(fp),
 		Key: &client.Key{
