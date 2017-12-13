@@ -1,13 +1,12 @@
 package lib
 
 import (
-	"github.com/gravitational/teleport/lib/client"
-	"github.com/gravitational/trace"
+	"net"
 	"net/url"
 	"strconv"
 
-	"net"
-	// log "github.com/sirupsen/logrus"
+	"github.com/gravitational/teleport/lib/client"
+	"github.com/gravitational/trace"
 )
 
 const (

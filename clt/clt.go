@@ -11,29 +11,31 @@ import (
 	"strconv"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/gravitational/teleconsole/conf"
+	"github.com/gravitational/teleconsole/geo"
+	"github.com/gravitational/teleconsole/lib"
+
 	"github.com/fatih/color"
 	"github.com/gravitational/teleport/integration"
 	"github.com/gravitational/teleport/lib/client"
 	"github.com/gravitational/teleport/lib/defaults"
 	tservice "github.com/gravitational/teleport/lib/service"
-
-	"github.com/gravitational/teleconsole/conf"
-	"github.com/gravitational/teleconsole/geo"
-	"github.com/gravitational/teleconsole/lib"
-
 	tsession "github.com/gravitational/teleport/lib/session"
 	"github.com/gravitational/trace"
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/crypto/ssh"
 )
 
-var (
-	tunnelError     = fmt.Errorf("Unable to initialize the API for the local Teleport instance")
-	DefaultSiteName = "teleconsole-client"
+var tunnelError = fmt.Errorf("Unable to initialize the API for the local Teleport instance")
 
-	// SyncRefreshIntervalMs defines the minimum amount of time it takes for
+const (
+	hostID             = "00000000-0000-0000-0000-000000000000"
+	defaultClusterName = "teleconsole-client"
+
+	// syncRefreshIntervalMs defines the minimum amount of time it takes for
 	// the local SSH server and the disposable proxy to synchronize the session
 	// state (milliseconds)
-	SyncRefreshInterval = time.Second
+	syncRefreshInterval = time.Second
 )
 
 // StartBroadcast starts a new SSH session exposed to the world via disposable
@@ -85,7 +87,7 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 	}
 	// create a new (local) teleport server instance and add ourselves as a user to it:
 	fmt.Printf("Starting local SSH server on %s...\n", hostName)
-	localServer := integration.NewInstance(DefaultSiteName, hostName, ports, nil, nil)
+	localServer := integration.NewInstance(defaultClusterName, hostID, hostName, ports, nil, nil)
 	localServer.Secrets.Users = them.AnnounceUsers()
 
 	// request Teleconsole server to create a remote teleport proxy we can
@@ -111,7 +113,7 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 	tconf.SSH.Enabled = true
 	tconf.Console = nil
 	tconf.Auth.NoAudit = true
-	tconf.Proxy.DisableWebUI = true
+	tconf.Proxy.DisableWebInterface = true
 	trustedSecrets := sess.Secrets
 	for uname, user := range me.LoginUsers() {
 		trustedSecrets.Users[uname] = user
@@ -129,12 +131,12 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 
 	// create a local client to "SSH into ourselves":
 	port, _ := strconv.Atoi(localServer.GetPortSSH())
-	sshClient, err := localServer.NewClient(me.Username, DefaultSiteName, hostName, port)
+	sshClient, err := localServer.NewClient(me.Username, defaultClusterName, hostName, port)
 	if err != nil {
 		return trace.Wrap(err)
 	}
 	// Define "shell created" callback
-	sshClient.OnShellCreated = func(shell io.ReadWriteCloser) (exit bool, err error) {
+	sshClient.OnShellCreated = func(_ *ssh.Session, _ *ssh.Client, shell io.ReadWriteCloser) (exit bool, err error) {
 		// publish the session (when it's ready) so the server-side disposable
 		// proxy will locate this client by a session ID
 		if err = publishSession(localServer, api); err != nil {
@@ -146,7 +148,7 @@ func StartBroadcast(c *conf.Config, api *APIClient, cmd []string) error {
 		var brokenSessionError = fmt.Errorf("SSH tunnel cannot be established, please try again.")
 		const attempts = 10
 		for i := 0; i < attempts; i++ {
-			time.Sleep(SyncRefreshInterval)
+			time.Sleep(syncRefreshInterval)
 			sessionStats, err := api.GetSessionStats(api.SessionID)
 			if err != nil {
 				log.Debug(err)
@@ -195,7 +197,7 @@ func publishSession(local *integration.TeleInstance, api *APIClient) error {
 	if local.Tunnel == nil {
 		return trace.Wrap(tunnelError)
 	}
-	site, err := local.Tunnel.GetSite(local.Config.Auth.DomainName)
+	site, err := local.Tunnel.GetSite(local.Config.Auth.ClusterName.GetClusterName())
 	if err != nil {
 		log.Error(err)
 		return trace.Wrap(err)
@@ -294,7 +296,7 @@ func Join(c *conf.Config, api *APIClient, sid string) error {
 		HostLogin:          session.Login,
 		InsecureSkipVerify: false,
 		KeysDir:            "/tmp/",
-		SiteName:           DefaultSiteName,
+		SiteName:           defaultClusterName,
 		LocalForwardPorts:  c.ForwardPorts,
 	})
 	if err != nil {
