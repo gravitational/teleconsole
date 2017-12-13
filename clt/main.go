@@ -15,9 +15,7 @@ import (
 	"github.com/gravitational/teleport/lib/client"
 	teleport "github.com/gravitational/teleport/lib/defaults"
 	"github.com/gravitational/teleport/lib/utils"
-
 	"github.com/gravitational/trace"
-
 	log "github.com/sirupsen/logrus"
 )
 
@@ -39,28 +37,21 @@ func (this *App) DebugDump() {
 }
 
 func initLogging(verbosity int) {
-	// our log:
-	log.SetLevel(log.ErrorLevel)
 	log.SetOutput(os.Stderr)
 
-	// teleport log:
-	utils.InitLoggerCLI()
-
+	level, teleLevel := log.ErrorLevel, log.ErrorLevel
 	switch verbosity {
 	case 1:
-		// our log:
-		log.SetLevel(log.InfoLevel)
+		level, teleLevel = log.InfoLevel, log.InfoLevel
 	case 2:
-		// our log:
-		log.SetLevel(log.DebugLevel)
-		// teleport log:
-		utils.InitLoggerVerbose()
+		level, teleLevel = log.DebugLevel, log.InfoLevel
 	case 3:
-		// our log:
-		log.SetLevel(log.DebugLevel)
-		// teleport log:
-		utils.InitLoggerDebug()
+		level, teleLevel = log.DebugLevel, log.DebugLevel
 	}
+	// local log
+	log.SetLevel(level)
+	// teleport log
+	utils.InitLogger(utils.LoggingForCLI, teleLevel)
 }
 
 // NewApp constructs and returns a "Teleconsole application object"
@@ -99,9 +90,9 @@ func NewApp(fs *flag.FlagSet) (*App, error) {
 
 	// configure teleport internals to use our ping interval.
 	// IMPORANT: these must be similar for proxies and servers
-	teleport.SessionRefreshPeriod = SyncRefreshInterval
-	teleport.ReverseTunnelAgentHeartbeatPeriod = SyncRefreshInterval * 2
-	teleport.ServerHeartbeatTTL = SyncRefreshInterval * 2
+	teleport.SessionRefreshPeriod = syncRefreshInterval
+	teleport.ReverseTunnelAgentHeartbeatPeriod = syncRefreshInterval * 2
+	teleport.ServerHeartbeatTTL = syncRefreshInterval * 2
 
 	// this disables costly Teleport "key pool"
 	native.PrecalculatedKeysNum = 0

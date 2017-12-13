@@ -1,17 +1,15 @@
 package main
 
 import (
-	//"crypto/x509"
-
 	"crypto/x509"
 	"fmt"
 	"net/url"
 	"os"
 
-	"github.com/sirupsen/logrus"
 	"github.com/gravitational/teleconsole/clt"
 	"github.com/gravitational/teleconsole/version"
 	"github.com/gravitational/trace"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -27,24 +25,23 @@ func main() {
 		app.DebugDump()
 	}
 
-	// we have CLI args?
-	if len(app.Args) > 0 {
-		switch app.Args[0] {
-		case "help":
-			app.Usage()
-		case "join":
-			err = app.Join()
-		case "version":
-			version.Print("Teleconsole", conf.Verbosity > 0)
-			os.Exit(0)
-		default:
-			app.Usage()
-		}
-		// no CLI args? Start a new broadcast!
-	} else {
-		err = app.Start()
+	if len(app.Args) == 0 {
+		// start new broadcast if no arguments were specified
+		fatalIf(app.Start())
+		return
 	}
-	fatalIf(err)
+
+	switch app.Args[0] {
+	case "help":
+		app.Usage()
+	case "join":
+		fatalIf(app.Join())
+	case "version":
+		version.Print("Teleconsole", conf.Verbosity > 0)
+		os.Exit(0)
+	default:
+		app.Usage()
+	}
 }
 
 func fatalIf(err error) {
