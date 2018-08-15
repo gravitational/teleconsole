@@ -57,13 +57,12 @@ func TestNamedIdentity(t *testing.T) {
 	if i.Anonymous {
 		t.Fatal("supposed to NOT be anonymous")
 	}
-	if len(i.Logins) != 4 {
-		t.Fatalf("This identity must have 4 logins!\n%s", js)
+	if len(i.Logins) != 3 {
+		t.Fatalf("This identity must have 3 logins, but instead:\n%s", js)
 	}
 	one := i.Logins[0]
 	two := i.Logins[1]
 	k1 := i.Logins[2]
-	k2 := i.Logins[3]
 	if one.Username == two.Username || one.Username == k1.Username {
 		t.Fatal("usernames must not be the same")
 	}
@@ -89,10 +88,9 @@ func TestNamedIdentity(t *testing.T) {
 	validateFileBased("one", one)
 	validateFileBased("two", two)
 	validateGithubBased("kontsevoy0", k1)
-	validateGithubBased("kontsevoy1", k2)
 
 	validateUserMap := func(logins UserMap) {
-		names := []string{"one", "two", "kontsevoy0", "kontsevoy1"}
+		names := []string{"one", "two", "kontsevoy0"}
 		for _, n := range names {
 			l := logins[n]
 			if l == nil {

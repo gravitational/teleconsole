@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/gravitational/teleconsole/conf"
+	log "github.com/sirupsen/logrus"
 )
 
 type Endpoint struct {

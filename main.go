@@ -8,13 +8,14 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/sirupsen/logrus"
 	"github.com/gravitational/teleconsole/clt"
 	"github.com/gravitational/teleconsole/version"
 	"github.com/gravitational/trace"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
+
 	app, err := clt.NewApp(nil)
 	fatalIf(err)
 

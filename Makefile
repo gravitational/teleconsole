@@ -28,13 +28,13 @@ clean:
 
 .PHONY:test
 test:
-	go test ./... -v
+	go test -v ./... 
 
 
 .PHONY:deps
 deps:
 	go get github.com/fatih/color
-	go get github.com/Sirupsen/logrus
+	go get github.com/sirupsen/logrus
 	go get github.com/julienschmidt/httprouter
 	go get golang.org/x/text/encoding
 	go get golang.org/x/text/encoding/unicode

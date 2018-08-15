@@ -1,6 +1,9 @@
 package geo
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 var prefixes = map[string]string{
 	"":   DefaultEndpoint.Hostname,
