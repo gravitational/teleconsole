@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
 	"github.com/fatih/color"
 	"github.com/gravitational/teleport/integration"
 	"github.com/gravitational/teleport/lib/client"
