@@ -12,6 +12,7 @@ GOSRC=$(shell find -name "*.go" -print)
 
 # Default target: out/teleconsole
 $(OUT): $(GOSRC) Makefile
+	$(MAKE) -C ../teleport clean
 	$(MAKE) -C version
 	CGO_ENABLED=1 go build -i -ldflags -w -o $(OUT)
 
@@ -27,4 +28,16 @@ clean:
 
 .PHONY:test
 test:
-	go test ./... -v
+	go test -v ./... 
+
+
+.PHONY:deps
+deps:
+	go get github.com/fatih/color
+	go get github.com/sirupsen/logrus
+	go get github.com/julienschmidt/httprouter
+	go get golang.org/x/text/encoding
+	go get golang.org/x/text/encoding/unicode
+	go get rsc.io/letsencrypt
+	# NOTE: teleport repo must be checked out with tag v2.0.0-alpha.3
+

@@ -89,7 +89,7 @@ port forwarding without your help, just like a regular SSH client would:
 
 Teleconsole is built on top of [Gravitational Teleport](http://gravitational.com/teleport) 
 which is a clustered SSH server with built-in SSH bastion/proxy. Both projects are 
-open source and hosted [here on Github](https://github.com/gravitational/teleport/blob/master/README.md).
+open source and hosted [here on GitHub](https://github.com/gravitational/teleport/blob/master/README.md).
 
 What happens when you type `teleconsole`?
 

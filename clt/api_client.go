@@ -20,7 +20,7 @@ import (
 	"github.com/gravitational/teleconsole/conf"
 	"github.com/gravitational/teleconsole/lib"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/gravitational/trace"
 )
 
