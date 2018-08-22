@@ -15,7 +15,7 @@ import (
 
 	"golang.org/x/crypto/ssh"
 
-	"github.com/sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/gravitational/teleport/integration"
 	"github.com/gravitational/teleport/lib/auth/native"
 	"github.com/gravitational/teleport/lib/client"

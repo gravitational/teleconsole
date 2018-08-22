@@ -8,10 +8,10 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/gravitational/teleconsole/clt"
 	"github.com/gravitational/teleconsole/version"
 	"github.com/gravitational/trace"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
