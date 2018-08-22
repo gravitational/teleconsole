@@ -178,6 +178,10 @@ So far the top feature requests are:
 
 What do **you** think we should add next? Let us know: `info@gravitational.com`
 
+## Building From Source
+
+See [BUILDING](BUILDING.md)
+
 ## Who Built Teleconsole?
 
 Teleconsole is an easy to use demo of [Gravitational Teleport](http://gravitational.com/teleport),
