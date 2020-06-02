@@ -157,6 +157,10 @@ Examples:
 Made by Gravitational Inc http://gravitational.com
 ```
 
+### Uninstalling 
+
+Close any running `teleconsole` processes. Execute `which teleconsole` and remove the single `teleconsole` binary.
+
 ## Support for Private SSH Bastions
 
 Some people may be uncomfortable using publicly accessible SSH bastion on https://teleconsole.com
