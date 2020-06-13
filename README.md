@@ -194,3 +194,34 @@ component of our commercial offering for deploying and remotely [operating SaaS 
 3rd party enterprise infrastructure](https://gravitational.com/product). 
 
 For more info, drop us an email: [info@gravitational.com](mailto:info@gravitational.com)
+
+## Building from source
+
+Instructions below are for Ubuntu 17.04
+
+Pre-requisites
+
+1. Install golang >= 1.7: `sudo apt install golang-1.9`
+- required for `context` (https://stackoverflow.com/a/42802790/4126114)
+2. Verify version: `go version` (e.g. `go version go1.9.2 linux/amd64`)
+3. Set `GOPATH`: `export GOPATH=$HOME/go`
+
+
+To build the binaries
+
+1. Clone this repository: `go get github.com/gravitational/teleconsole`
+2. `cd $GOPATH/src/github.com/gravitational/teleconsole`
+3. Install dependencies: `go get ./...` (add `-v` for higher verbosity)
+4. Build binaries: `make`
+
+
+To run tests
+
+1. Install test dependencies: `get -t ./...`
+2. Run tests: `make test`
+
+
+To make a release
+
+- `make release`
+- check `Makefile` for more details
