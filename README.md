@@ -154,7 +154,7 @@ Examples:
     Joins the existing session requesting to forward gravitational.com:80
     to local port 5000.
 
-Made by Gravitational Inc http://gravitational.com
+Made by Teleport http://goteleport.com
 ```
 
 ### Uninstalling 
@@ -164,7 +164,7 @@ Close any running `teleconsole` processes. Execute `which teleconsole` and remov
 ## Support for Private SSH Bastions
 
 Some people may be uncomfortable using publicly accessible SSH bastion on https://teleconsole.com
-They can do the same thing by setting up a [Teleport](http://gravitational.com/teleport) bastion
+They can do the same thing by setting up a [Teleport](http://goteleport.com) deployment
 on their own server. 
 
 In fact, Teleport supports many more features, including session recording and replay, 
@@ -180,7 +180,7 @@ So far the top feature requests are:
 2. Ability to see who's viewing your session.
 3. Additional password auth per session.
 
-What do **you** think we should add next? Let us know: `info@gravitational.com`
+What do **you** think we should add next? Let us know: `info@goteleport.com`
 
 ## Building From Source
 
@@ -188,9 +188,7 @@ See [BUILDING](BUILDING.md)
 
 ## Who Built Teleconsole?
 
-Teleconsole is an easy to use demo of [Gravitational Teleport](http://gravitational.com/teleport),
-a product created by [Gravitational Inc](https://gravitational.com). Teleport is an open source 
-component of our commercial offering for deploying and remotely [operating SaaS applications on top of 
-3rd party enterprise infrastructure](https://gravitational.com/product). 
+Teleconsole is an easy to use demo of Server Access in [Teleport](http://goteleport.com),
+a unified access plane created by [Teleport](https://goteleport.com). Teleport allows engineers and security professionals to unify access for SSH servers, Kubernetes clusters, web applications, and databases across all environments.
 
-For more info, drop us an email: [info@gravitational.com](mailto:info@gravitational.com)
+For more info, drop us an email: [info@goteleport.com](mailto:info@goteleport.com)
